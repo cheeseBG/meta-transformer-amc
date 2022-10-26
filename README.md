@@ -5,7 +5,8 @@
 1. HAR? Presence detection? 방향성 결정
 2. benchmark dataset 제공
 3. Challenge한 부분이 종속성 문제 외에 더 있는지 확안
-4. Server로 올릴때 Federated Learning을 써야할 이유가 있을지? privacy 문제에 대한 확인 
+4. Server로 올릴때 Federated Learning을 써야할 이유가 있을지? privacy 문제에 대한 확인
+5. 문제를 수식으로 정의 할 수 있는가? 설계까지.
 
 ## Consider
 1. RSSI가 낮을수록 성능이 떨어진다.
