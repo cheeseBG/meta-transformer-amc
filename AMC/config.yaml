@@ -1,0 +1,15 @@
+# data parameters
+dataset_path: C:\Users\user\Documents\GitHub\modulation-classification\data\RML2018
+snr_range: [-20, 20]
+save_path: checkpoint/robust_full
+model_name: robustcnn
+epoch: 50
+batch_size: 128
+# training parameters
+cuda: True
+gpu_ids: [0]  # set the GPU ids to use, e.g. [0] or [1, 2]
+lr: 0.01
+print_iter: 400
+# test parameters
+test_dataset_path: C:\Users\user\Documents\GitHub\modulation-classification\data\RML2018
+load_test_path: checkpoint/robust_full/6.tar
