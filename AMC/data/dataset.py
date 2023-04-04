@@ -45,3 +45,4 @@ class AMCDataset(data.Dataset):
         sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
 
         return sample
+

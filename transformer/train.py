@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import config, io_utils
 
 from backbone import TransformerModel
-from dataset import TrainSet
+from amc_dataset import TrainSet
 
 
 

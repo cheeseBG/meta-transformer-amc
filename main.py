@@ -14,8 +14,8 @@ import torch.optim as optim
 
 from util import read_csi, read_csi_from_pcap, read_csi_csv
 from proto import load_protonet_conv
-from train import train
-from test import test
+from fs_train import train
+from fs_test import test
 from config import param
 
 # from sklearn.model_selection import train_test_split
@@ -25,17 +25,17 @@ use_pretrain = True
 test_mod = True
 
 
-##### Load the dataset
+##### Load the amc_dataset
 data_folder = 'm1c4_PCA_test_80'
 train_env = 'A1'
-# train_folder_name = 'few_shot_datasets/ReWis/' + data_folder + '/train_A1'  # ReWis dataset
-# train_folder_name = 'few_shot_datasets/pcap/'  # New dataset
-train_folder_name = 'few_shot_datasets/jji_home/'  # New dataset
+# train_folder_name = 'few_shot_datasets/ReWis/' + data_folder + '/train_A1'  # ReWis amc_dataset
+# train_folder_name = 'few_shot_datasets/pcap/'  # New amc_dataset
+train_folder_name = 'few_shot_datasets/jji_home/'  # New amc_dataset
 
 test_env = 'A3'
-# test_folder_name = 'few_shot_datasets/ReWis/' + data_folder + '/test_' + test_env  # ReWis dataset
-# test_folder_name = 'few_shot_datasets/pcap/'  # New dataset
-test_folder_name = 'few_shot_datasets/jji_home/'  # New dataset
+# test_folder_name = 'few_shot_datasets/ReWis/' + data_folder + '/test_' + test_env  # ReWis amc_dataset
+# test_folder_name = 'few_shot_datasets/pcap/'  # New amc_dataset
+test_folder_name = 'few_shot_datasets/jji_home/'  # New amc_dataset
 
 ##### Train Phase
 model_out_name = 'pretrain/model_s{}q{}.pt'.format(str(param['train_support']), str(param['train_query']))

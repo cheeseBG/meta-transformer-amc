@@ -61,7 +61,7 @@ def read_csi(base_directory):
             datay = np.concatenate([datay, result[1]])
     return datax, datay
 # %%
-"""Load the dataset's folder:either m3c1_xxx or m3c4_xxx"""
+"""Load the amc_dataset's folder:either m3c1_xxx or m3c4_xxx"""
 data_folder = 'extractd_3x4/m3c4_PCA_80_300_extracted_3x4'
 train_env = 'A1'
 train_folder_name = 'few_shot_datasets/' + data_folder + '/train_' + train_env
@@ -88,8 +88,8 @@ def extract_sample(n_way, n_support, n_query, datax, datay):
       n_way (int): number of classes in a classification task
       n_support (int): number of labeled examples per class in the support set
       n_query (int): number of labeled examples per class in the query set
-      datax (np.array): dataset of data_frames
-      datay (np.array): dataset of labels
+      datax (np.array): amc_dataset of data_frames
+      datay (np.array): amc_dataset of labels
   Returns:
       (dict) of:
         (torch.Tensor): sample of data_frames. Size (n_way, n_support+n_query, (dim))
@@ -122,8 +122,8 @@ def extract_sample(n_way, n_support, n_query, datax, datay):
       n_way (int): number of classes in a classification task
       n_support (int): number of labeled examples per class in the support set
       n_query (int): number of labeled examples per class in the query set
-      datax (np.array): dataset of data_frames
-      datay (np.array): dataset of labels
+      datax (np.array): amc_dataset of data_frames
+      datay (np.array): amc_dataset of labels
   Returns:
       (dict) of:
         (torch.Tensor): sample of images. Size (n_way, n_support+n_query, (dim))

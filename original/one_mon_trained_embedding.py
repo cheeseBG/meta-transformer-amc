@@ -9,7 +9,7 @@ Testing:
 
 Few-shot learning for classifying human activities for the case of one monitor.
 This code does not require embedding training as the embedding is already trained.
-To train a model, load any dataset start with m1c1_xxx or m1c4_xxx. 
+To train a model, load any amc_dataset start with m1c1_xxx or m1c4_xxx.
 The code trains the model with the data collected from environment A1 and can be tested on either A2 or A3.
 """
 
@@ -66,7 +66,7 @@ def read_csi(base_directory):
     return datax, datay
 
 """
- Load the dataset's folder:either m3c1_xxx or m3c4_xxx ###
+ Load the amc_dataset's folder:either m3c1_xxx or m3c4_xxx ###
 """
 data_folder = 'm1c4_PCA_test_80'
 train_env = 'A1'
@@ -88,8 +88,8 @@ def extract_sample(n_way, n_support, n_query, datax, datay, test = False):
       n_way (int): number of classes in a classification task
       n_support (int): number of labeled examples per class in the support set
       n_query (int): number of labeled examples per class in the query set
-      datax (np.array): dataset of dataloader dataframes
-      datay (np.array): dataset of labels
+      datax (np.array): amc_dataset of dataloader dataframes
+      datay (np.array): amc_dataset of labels
   Returns:
       (dict) of:
         (torch.Tensor): sample of dataloader dataframes. Size (n_way, n_support+n_query, (dim))
