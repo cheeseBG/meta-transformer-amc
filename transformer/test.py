@@ -6,7 +6,7 @@ import numpy as np
 
 import io_utils, config
 from backbone import TransformerModel
-from dataset import TestSet
+from amc_dataset import TestSet
 
 def test(params):
     # load model
@@ -22,7 +22,7 @@ def test(params):
     state_dict.pop('classifier.L.weight_v', None)
     model.load_state_dict(state_dict, strict=False)
 
-    # initialize dataset
+    # initialize amc_dataset
     test_data = TestSet(params.n_way, params.k_shot, params.k_query, params.win_size)
     
     x_spt, y_spt, x_qry, y_qry = test_data.load_test_set()

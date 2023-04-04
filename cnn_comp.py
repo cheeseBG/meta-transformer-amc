@@ -13,46 +13,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 
 
-def read_mat(csi_directory_path, csi_action):
-    """
-    Reads all the actions from a given alphabet_directory
-    """
-    datax = []
-    datay = []
-
-    csi_mats = os.listdir(csi_directory_path)
-    for csi_mat in csi_mats:
-        mat = loadmat(csi_directory_path + csi_mat)
-        if 'PCA' in csi_directory_path:
-            data = mat['cfm_data']
-        else:
-            data = mat['iq_data']
-
-        datax.extend([data])
-        datay.extend([csi_action])
-    return np.array(datax), np.array(datay)
-
-def read_csi(base_directory):
-    """
-    Reads all the alphabets from the base_directory
-    Uses multithreading to decrease the reading time drasticallytrain_x
-    """
-    datax = None
-    datay = None
-    pool = mp.Pool(mp.cpu_count())
-    results = [pool.apply(read_mat,args=(
-                              base_directory + '/' + directory + '/', directory, 
-                              )) for directory in os.listdir(base_directory)]
-    pool.close()
-    for result in results:
-        if datax is None:
-            datax = result[0]
-            datay = result[1]
-        else:
-            datax = np.vstack([datax, result[0]])
-            datay = np.concatenate([datay, result[1]])
-    return datax, datay
-
 
 data_folder = 'extractd_3x4/m1c4_PCA_80_300_extracted_3x4'
 train_folder_name = 'few_shot_datasets/' + data_folder + '/train_A1'

@@ -117,8 +117,8 @@ def extract_train_sample(n_way, n_support, n_query, datax, datay):
         n_way (int): number of classes in a classification task
         n_support (int): number of labeled examples per class in the support set
         n_query (int): number of labeled examples per class in the query set
-        datax (np.array): dataset of dataloader dataframes
-        datay (np.array): dataset of labels
+        datax (np.array): amc_dataset of dataloader dataframes
+        datay (np.array): amc_dataset of labels
     Returns:
         (dict) of:
           (torch.Tensor): sample of dataloader dataframes. Size (n_way, n_support+n_query, (dim))
@@ -159,8 +159,8 @@ def extract_test_sample(n_way, n_support, n_query, datax, datay):
         n_way (int): number of classes in a classification task
         n_support (int): number of labeled examples per class in the support set
         n_query (int): number of labeled examples per class in the query set
-        datax (np.array): dataset of dataloader dataframes
-        datay (np.array): dataset of labels
+        datax (np.array): amc_dataset of dataloader dataframes
+        datay (np.array): amc_dataset of labels
     Returns:
         (dict) of:
           (torch.Tensor): sample of dataloader dataframes. Size (n_way, n_support+n_query, (dim))
@@ -168,7 +168,6 @@ def extract_test_sample(n_way, n_support, n_query, datax, datay):
           (int): n_support
           (int): n_query
     """
-    #K = np.array(['empty', 'jump', 'stand', 'walk']) # ReWis
     K = np.array(param['test_labels'])
 
     # extract support set & query set
