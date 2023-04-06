@@ -1,20 +1,20 @@
-import torch
-from data.transform import AMCTransform
-from runner.utils import get_config
-import torch.utils.data as data
 import os
 import h5py
 import json
-from numpy import argwhere
 import numpy as np
+import random
+import torch
+import torch.utils.data as data
+from data.transform import AMCTransform
+from runner.utils import get_config
+from numpy import argwhere
 
 
 class AMCTrainDataset(data.Dataset):
-    def __init__(self, root_path, pre=None, mode=None, robust=False, snr_range=None):
+    def __init__(self, root_path, mode=None, robust=False, snr_range=None):
         super(AMCTrainDataset, self).__init__()
 
         self.root_path = root_path
-        self.pre = pre
         self.mode = mode
         self.snr_range = snr_range
         self.transforms = AMCTransform()
@@ -76,11 +76,10 @@ class AMCTrainDataset(data.Dataset):
 
 
 class AMCTestDataset(data.Dataset):
-    def __init__(self, root_path, pre=None, mode=None, robust=False, snr_range=None):
+    def __init__(self, root_path, mode=None, robust=False, snr_range=None):
         super(AMCTestDataset, self).__init__()
 
         self.root_path = root_path
-        self.pre = pre
         self.mode = mode
         self.snr_range = snr_range
         self.transforms = AMCTransform()
@@ -140,3 +139,58 @@ class AMCTestDataset(data.Dataset):
             sample = {"data": x, "label": label, "snr": self.snr[item]}
 
         return sample
+
+
+class FewShotDataset(data.Dataset):
+    def __init__(self, root_path, num_support, num_query, snr_range=None):
+        self.root_path = root_path
+        self.snr_range = snr_range
+        self.config = get_config('config.yaml')
+
+        self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
+        self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
+
+        self.iq = self.data['X']
+        self.onehot = self.data['Y']
+        self.snr = np.squeeze(self.data['Z'])
+
+        self.num_support = num_support
+        self.num_query = num_query
+
+        # 클래스 라벨 추출
+        self.labels = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]
+
+        # Todo
+        # 각 라벨별 인덱스 추출
+        self.label_indices = {label: [i for i, x in enumerate(self.data) if x[1] == label] for label in self.labels}
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        # 라벨 추출
+        label = self.labels[idx]
+
+        # 클래스 인스턴스 추출
+        label_instances = [x for x in self.data if x[1] == label]
+
+        # 라벨별 인덱스 리스트 생성
+        label_indices = self.label_indices[label]
+
+        # support set 생성
+        support_indices = random.sample(label_indices, self.num_support)
+        support_set = [label_instances[i] for i in support_indices]
+
+        # query set 생성
+        query_indices = list(set(label_indices) - set(support_indices))
+        query_indices = random.sample(query_indices, self.num_query)
+        query_set = [label_instances[i] for i in query_indices]
+
+        # tensor로 변환
+        support_set = torch.stack([x[0] for x in support_set])
+        query_set = torch.stack([x[0] for x in query_set])
+
+        # 라벨도 tensor로 변환
+        label = torch.tensor(label)
+
+        return support_set, query_set, label
