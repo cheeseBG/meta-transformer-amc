@@ -36,7 +36,7 @@ class Tester:
         self.net.load_state_dict(torch.load(self.model_path))
 
         if not self.per_snr:
-            test_data = AMCTestDataset(self.config["test_dataset_path"], robust=True, snr_range=self.config["snr_range"])
+            test_data = AMCTestDataset(self.config["test_dataset_path"], robust=True, mode='easy', snr_range=self.config["snr_range"])
             test_dataloader = DATA.DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
 
             correct = 0
@@ -74,7 +74,7 @@ class Tester:
             f = open(os.path.join(os.path.dirname(self.model_path), "acc.txt"), "w")
 
             for snr in snr_range:
-                test_data = AMCTestDataset(self.config["test_dataset_path"], robust=True, snr_range=(snr, snr))
+                test_data = AMCTestDataset(self.config["test_dataset_path"], robust=True, mode='easy', snr_range=(snr, snr))
                 test_dataloader = DATA.DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
 
                 self.net.eval()

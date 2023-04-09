@@ -1,7 +1,7 @@
 # data parameters
 dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
-snr_range: [-20, 20]
-save_path: checkpoint/robust_full
+snr_range: [-10, 20]
+save_path: checkpoint/robust_full_easy
 model_name: robustcnn
 epoch: 50
 batch_size: 128
@@ -10,12 +10,12 @@ batch_size: 128
 cuda: True
 gpu_ids: [0]  # set the GPU ids to use, e.g. [0] or [1, 2]
 train_proportion: 0.8
-lr: 0.01
+lr: 0.001
 print_iter: 400
 
 # test parameters
 test_dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
-load_test_path: checkpoint/robust_full/6.tar
+load_test_path: checkpoint/robust_full_easy/49.tar
 
 # AMC dataset configuration
 total_class: ['OOK', '4ASK', '8ASK', 'BPSK', 'QPSK', '8PSK', '16PSK', '32PSK', '16APSK', '32APSK', '64APSK', '128APSK', '16QAM', '32QAM', '64QAM', '128QAM', '256QAM', 'AM-SSB-WC', 'AM-SSB-SC', 'AM-DSB-WC', 'AM-DSB-SC', 'FM', 'GMSK', 'OQPSK']
