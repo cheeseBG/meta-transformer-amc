@@ -1,8 +1,27 @@
-# wifi-sensing-master
+# Few-shot learning based Wi-Fi sensing & AMC
 
-## To-do
-1. AMC dataset train, test 구분
-2. fewshot train, test dataloader 구현 (SNR 처리 어떻게 할지?)
-    - train: easy set
-    - test: unseen difficult set
-3. transformer based few-shot learning 구현
+## Test Environment
+The WiReal project has been developed and tested under the following computing environment:
+
+- Python 3.8
+- NVIDIA GeForce RTX 3070 graphics card
+
+## Installation
+
+* Clone the repository and install the required dependencies
+```
+pip install -r requirements.txt
+```
+## Usage
+
+* Automatic Modulation Classification(AMC)
+```
+cd AMC
+
+python main.py --fs
+```
+
+* Wi-Fi Sensing: Human Activity Recognition
+```
+Work in progress
+```
