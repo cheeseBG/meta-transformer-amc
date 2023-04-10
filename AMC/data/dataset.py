@@ -142,8 +142,9 @@ class AMCTestDataset(data.Dataset):
 
 
 class FewShotDataset(data.Dataset):
-    def __init__(self, root_path, num_support, num_query, snr_range=None):
+    def __init__(self, root_path, num_support, num_query, robust=False, snr_range=None):
         self.root_path = root_path
+        self.robust = robust
         self.snr_range = snr_range
         self.config = get_config('config.yaml')
 
@@ -154,43 +155,72 @@ class FewShotDataset(data.Dataset):
         self.onehot = self.data['Y']
         self.snr = np.squeeze(self.data['Z'])
 
+        # Sampling data in snr boundary
+        if self.snr_range is not None:
+            snr_mask = (self.snr_range[0] <= self.snr) & (self.snr <= self.snr_range[1])
+            self.iq = self.iq[snr_mask]
+            self.onehot = self.onehot[snr_mask]
+            self.snr = self.snr[snr_mask]
+
+        # Sampling easy class
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
+                             range(len(self.onehot))])
+        self.iq = self.iq[mod_mask]
+        self.onehot = self.onehot[mod_mask]
+        self.snr = self.snr[mod_mask]
+        self.num_modulation = len(self.config['easy_class_indice'])
+
+        # Extract class labels
+        self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]
+        self.labels = np.unique(self.label_list)
+
+        # Extract indice of each labels
+        self.label_indices = {label: [i for i, x in enumerate(self.label_list) if x == label] for label in self.labels}
+
+        # few-shot variables
         self.num_support = num_support
         self.num_query = num_query
-
-        # 클래스 라벨 추출
-        self.labels = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]
-
-        # Todo
-        # 각 라벨별 인덱스 추출
-        self.label_indices = {label: [i for i, x in enumerate(self.data) if x[1] == label] for label in self.labels}
+        self.num_episode = len(self.snr) // ((self.num_support + self.num_query) * len(self.labels))
 
     def __len__(self):
-        return len(self.labels)
+        return self.num_episode
 
     def __getitem__(self, idx):
-        # 라벨 추출
-        label = self.labels[idx]
+        # idx means index of episode
+        sample = dict()
 
-        # 클래스 인스턴스 추출
-        label_instances = [x for x in self.data if x[1] == label]
+        if self.robust is True:
+            for label in self.labels:
+                sample[label] = dict()
+                label_indices = self.label_indices[label]
 
-        # 라벨별 인덱스 리스트 생성
-        label_indices = self.label_indices[label]
+                # support set
+                support_indices = random.sample(label_indices, self.num_support)
+                support_set = [np.concatenate((self.iq[i].transpose(), np.flip(self.iq[i].transpose(), axis=1)), axis=0)
+                               for i in support_indices]
+                sample[label]['support'] = support_set
 
-        # support set 생성
-        support_indices = random.sample(label_indices, self.num_support)
-        support_set = [label_instances[i] for i in support_indices]
+                # query set
+                query_indices = list(set(label_indices) - set(support_indices))
+                query_indices = random.sample(query_indices, self.num_query)
+                query_set = [np.concatenate((self.iq[i].transpose(), np.flip(self.iq[i].transpose(), axis=1)), axis=0)
+                             for i in query_indices]
+                sample[label]['query'] = query_set
 
-        # query set 생성
-        query_indices = list(set(label_indices) - set(support_indices))
-        query_indices = random.sample(query_indices, self.num_query)
-        query_set = [label_instances[i] for i in query_indices]
+        else:
+            for label in self.labels:
+                sample[label] = dict()
+                label_indices = self.label_indices[label]
 
-        # tensor로 변환
-        support_set = torch.stack([x[0] for x in support_set])
-        query_set = torch.stack([x[0] for x in query_set])
+                # support set
+                support_indices = random.sample(label_indices, self.num_support)
+                support_set = [self.iq[i].transpose() for i in support_indices]
+                sample[label]['support'] = support_set
 
-        # 라벨도 tensor로 변환
-        label = torch.tensor(label)
+                # query set
+                query_indices = list(set(label_indices) - set(support_indices))
+                query_indices = random.sample(query_indices, self.num_query)
+                query_set = [self.iq[i].transpose() for i in query_indices]
+                sample[label]['query'] = query_set
 
-        return support_set, query_set, label
+        return sample
