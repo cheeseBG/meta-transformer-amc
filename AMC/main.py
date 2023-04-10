@@ -12,20 +12,20 @@ if __name__ == '__main__':
     logger.addHandler(handler)
 
     # Supervised learning
-    #logger.info('Start supervised learning')
-    #trainer = Trainer("config.yaml")
-    #trainer.train()
-    #tester = Tester("config.yaml", per_snr=True)
-    #tester.test()
+    # logger.info('Start supervised learning')
+    # trainer = Trainer("config.yaml")
+    # trainer.train()
+    # tester = Tester("config.yaml", per_snr=True)
+    # tester.test()
 
     # Few shot learning
     # logger.info('Start few-shot learning')
     # trainer = Trainer("config.yaml")
     # trainer.fs_train()
 
-    tester = Tester("config.yaml")
-    logger.info('Original Test')
-    tester.fs_test()
-    logger.info('New Metric Test ')
-    tester.fs_test_once()
+    # tester = Tester("config.yaml")
+    # logger.info('Original Test')
+    # tester.fs_test()
+    # logger.info('New Metric Test ')
+    # tester.fs_test_once()
 
