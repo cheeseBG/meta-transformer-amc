@@ -1,4 +1,6 @@
 # Few-shot learning based Wi-Fi sensing & AMC
+##Project Status
+This project is currently a work in progress and is not yet complete.
 
 ## Test Environment
 The WiReal project has been developed and tested under the following computing environment:
@@ -18,7 +20,7 @@ pip install -r requirements.txt
 ```
 cd AMC
 
-python main.py --fs
+python main.py fs
 ```
 
 * Wi-Fi Sensing: Human Activity Recognition
