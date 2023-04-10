@@ -9,7 +9,7 @@ import numpy as np
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
 from models.proto import load_protonet_conv
-
+from plot.conf_matrix import plot_confusion_matrix
 
 
 class Tester:
@@ -120,7 +120,7 @@ class Tester:
         )
         model.load_state_dict(torch.load(self.model_path))
 
-        #conf_mat = torch.zeros(n_way, n_way)
+        conf_mat = torch.zeros(n_way, n_way)
         running_loss = 0.0
         running_acc = 0.0
 
@@ -130,17 +130,20 @@ class Tester:
                 output = model.proto_test(sample)
 
                 a = output['y_hat'].cpu().int()
-                # for cls in range(n_way):
-                #     conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
+                for cls in range(n_way):
+                    conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
 
                 running_acc += output['acc']
 
         avg_acc = running_acc / episode
+        plot_confusion_matrix(conf_mat,
+                              classes=[self.config['total_class'][cls] for cls in self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
 
     def fs_test_once(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+        n_way = len(self.config['difficult_class_indice'])
 
         test_data = FewShotDataset(self.config["dataset_path"],
                                    num_support=self.config["num_support"],
@@ -156,6 +159,7 @@ class Tester:
         )
         model.load_state_dict(torch.load(self.model_path))
 
+        conf_mat = torch.zeros(n_way, n_way)
         running_loss = 0.0
         running_acc = 0.0
         z_proto = None
@@ -168,9 +172,15 @@ class Tester:
                     z_proto = model.create_protoNet(sample)
 
                 output = model.proto_test_once(sample, z_proto)
+                a = output['y_hat'].cpu().int()
+                for cls in range(n_way):
+                    conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
                 running_acc += output['acc']
 
         avg_acc = running_acc / episode
+        plot_confusion_matrix(conf_mat,
+                              classes=[self.config['total_class'][cls] for cls in
+                                       self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
 
 
