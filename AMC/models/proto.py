@@ -71,26 +71,29 @@ class ProtoNet(nn.Module):
             # ,'target':target
         }
 
-    def create_protoNet(self, support_sample):
-        """
-                Computes loss, accuracy and output for classification task
-                Args:
-                    sample (torch.Tensor): shape (n_way, n_support+n_query, (dim))
-                Returns:
-                    torch.Tensor: shape(2), loss, accuracy and y_hat
-                """
-        sample_images = support_sample['s_csi_mats'].cuda(0)
-        n_way = support_sample['n_way']
-        n_support = support_sample['n_support']
+    def create_protoNet(self, sample):
+        n_way = len(sample.keys())
+        n_support = self.config['num_support']
 
-        x_support = sample_images
+        """
+        support shape: [K_way, num_support, 1, I/Q, data_length]
+        query shape: [K_way, num_query, 1, I/Q, data_length]
+        """
+        x_support = None
+        x_query = None
+        for label in sample.keys():
+            if x_support is None:
+                x_support = np.array([np.array(iq) for iq in sample[label]['support']])
+            else:
+                x_support = np.vstack([x_support, np.array([np.array(iq) for iq in sample[label]['support']])])
+            if x_query is None:
+                x_query = np.array([np.array(iq) for iq in sample[label]['query']])
+            else:
+                x_query = np.vstack([x_query, np.array([np.array(iq) for iq in sample[label]['query']])])
+
+        x_support = torch.from_numpy(x_support).cuda(0)
 
         # encode dataloader dataframes of the support and the query set
-        '''
-        Modified
-        # Separate support and query tensor
-        '''
-        x_support = x_support.contiguous().view(n_way * n_support, *x_support.size()[2:])
 
         z_support = self.encoder.forward(x_support)
         z_support_dim = z_support.size(-1)
@@ -146,38 +149,46 @@ class ProtoNet(nn.Module):
         return {
             'acc': acc_val.item(),
             'y_hat': y_hat
-            # ,'target':target
         }
 
-    # def proto_test_once(self, sample):
-    #     n_way = len(sample.keys())
-    #     n_support = self.config['num_support']
-    #     n_query = self.config['num_query']
-    #
-    #     sample_images = query_sample.cuda(0)
-    #     n_query = 1
-    #
-    #     gt_mat = torch.tensor([gt] * n_way).cuda(0)
-    #
-    #     x_query = sample_images
-    #     x_query = x_query.contiguous().view(*x_query.size())
-    #     z_query = self.encoder.forward(x_query)
-    #
-    #     # compute distances
-    #     dists = euclidean_dist(z_query, z_proto)
-    #
-    #     # compute probabilities
-    #     log_p_y = F.log_softmax(-dists, dim=1).view(n_way, n_query, -1)
-    #     _, y_hat = log_p_y.max(2)
-    #     acc_val = torch.eq(y_hat, gt_mat).float().mean()  # y_hat과 gt 같은지 비교
-    #
-    #     print('label:{}, acc:{}'.format(gt, acc_val))
-    #
-    #     return {
-    #         'acc': acc_val.item(),
-    #         'y_hat': y_hat
-    #         # ,'target':target
-    #     }
+    def proto_test_once(self, sample, z_proto):
+        n_way = len(sample.keys())
+        n_query = self.config['num_query']
+
+        """
+        support shape: [K_way, num_support, 1, I/Q, data_length]
+        query shape: [K_way, num_query, 1, I/Q, data_length]
+        """
+        x_query = None
+        for label in sample.keys():
+            if x_query is None:
+                x_query = np.array([np.array(iq) for iq in sample[label]['query']])
+            else:
+                x_query = np.vstack([x_query, np.array([np.array(iq) for iq in sample[label]['query']])])
+
+        x_query = torch.from_numpy(x_query).cuda(0)
+
+        # target indices are 0 ... n_way-1
+        target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
+        target_inds = Variable(target_inds, requires_grad=False)
+        target_inds = target_inds.cuda(0)
+
+        z_query = self.encoder.forward(x_query)
+
+        # compute distances
+        dists = euclidean_dist(z_query, z_proto)
+
+        # compute probabilities
+        log_p_y = F.log_softmax(-dists, dim=1).view(n_way, n_query, -1)
+        _, y_hat = log_p_y.max(2)
+        loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
+        acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()
+
+        return {
+            'acc': acc_val.item(),
+            'y_hat': y_hat
+        }
+
 
 class Flatten(nn.Module):
     def __init__(self):
