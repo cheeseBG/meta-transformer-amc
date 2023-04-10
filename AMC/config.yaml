@@ -2,8 +2,10 @@
 dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
 snr_range: [20, 20]
 save_path: checkpoint/few_shot
-model_name: robustcnn
 epoch: 10
+
+# supervised learning parameters
+model_name: robustcnn
 batch_size: 128
 
 # training parameters

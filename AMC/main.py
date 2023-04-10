@@ -22,10 +22,12 @@ if __name__ == '__main__':
         logger.info('Start supervised learning')
         trainer = Trainer("config.yaml")
         trainer.train()
+
         tester = Tester("config.yaml", per_snr=True)
         tester.test()
+
+    # Few shot learning
     elif args.lr_mode == 'fs':
-        # Few shot learning
         logger.info('Start few-shot learning')
         trainer = Trainer("config.yaml")
         trainer.fs_train()
