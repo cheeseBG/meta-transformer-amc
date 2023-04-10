@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
-from util import euclidean_dist
+from runner.utils import euclidean_dist, get_config
 
 class ProtoNet(nn.Module):
     def __init__(self, encoder):
@@ -16,6 +16,7 @@ class ProtoNet(nn.Module):
         """
         super(ProtoNet, self).__init__()
         self.encoder = encoder.cuda(0)
+        self.config = get_config('config.yaml')
 
     def proto_train(self, sample):
         """
@@ -25,13 +26,29 @@ class ProtoNet(nn.Module):
         Returns:
             torch.Tensor: shape(2), loss, accuracy and y_hat
         """
-        sample_images = sample['csi_mats'].cuda(0)
-        n_way = sample['n_way']
-        n_support = sample['n_support']
-        n_query = sample['n_query']
+        n_way = len(sample.keys())
+        n_support = self.config['num_support']
+        n_query = self.config['num_query']
 
-        x_support = sample_images[:, :n_support]
-        x_query = sample_images[:, n_support:]
+
+        """
+        support shape: [K_way, num_support, 1, I/Q, data_length]
+        query shape: [K_way, num_query, 1, I/Q, data_length]
+        """
+        x_support = None
+        x_query = None
+        for label in sample.keys():
+            if x_support is None:
+                x_support = np.array([np.array(iq) for iq in sample[label]['support']])
+            else:
+                x_support = np.vstack([x_support, np.array([np.array(iq) for iq in sample[label]['support']])])
+            if x_query is None:
+                x_query = np.array([np.array(iq) for iq in sample[label]['query']])
+            else:
+                x_query = np.vstack([x_query, np.array([np.array(iq) for iq in sample[label]['query']])])
+
+        x_support = torch.from_numpy(x_support).cuda(0)
+        x_query = torch.from_numpy(x_query).cuda(0)
 
         # target indices are 0 ... n_way-1
         target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
@@ -43,9 +60,6 @@ class ProtoNet(nn.Module):
         Modified
         # Separate support and query tensor
         '''
-        x_support = x_support.contiguous().view(n_way * n_support, *x_support.size()[2:])
-        x_query = x_query.contiguous().view(n_way * n_query, *x_query.size()[2:])
-
         z_support = self.encoder.forward(x_support)
         z_query = self.encoder.forward(x_query)
         z_support_dim = z_support.size(-1)
@@ -96,7 +110,7 @@ class ProtoNet(nn.Module):
         return z_proto
 
 
-    def proto_test(self, query_sample, z_proto, n_way, gt):
+    def proto_test(self, sample):
         sample_images = query_sample.cuda(0)
         n_query = 1
 
@@ -145,7 +159,7 @@ def load_protonet_conv(**kwargs):
 
     def conv_block(in_channels, out_channels):
         return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, padding=1),
+            nn.Conv2d(in_channels, out_channels, kernel_size=(1, 3), padding=1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
             nn.MaxPool2d(2)
@@ -155,10 +169,10 @@ def load_protonet_conv(**kwargs):
         conv_block(x_dim[0], hid_dim),
         conv_block(hid_dim, hid_dim),
         conv_block(hid_dim, hid_dim),
-        # conv_block(hid_dim, hid_dim),
-        # conv_block(hid_dim, hid_dim),
-        # conv_block(hid_dim, hid_dim),
-        # conv_block(hid_dim, hid_dim),
+        conv_block(hid_dim, hid_dim),
+        conv_block(hid_dim, hid_dim),
+        conv_block(hid_dim, hid_dim),
+        conv_block(hid_dim, hid_dim),
         conv_block(hid_dim, z_dim),
         Flatten()
     )

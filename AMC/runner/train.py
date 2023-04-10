@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 import torch.utils.data as DATA
 import torch.nn.functional as F
-from torch.optim import lr_scheduler
+from torch.optim import lr_scheduler, Adam
 import tqdm
 from runner.utils import get_config, model_selection
-from data.dataset import AMCTrainDataset
-#from utils import extract_train_sample
+from data.dataset import AMCTrainDataset, FewShotDataset
+from models.proto import load_protonet_conv
 import wandb
 
 class Trainer:
@@ -110,8 +110,7 @@ class Trainer:
             torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
 
-    # Todo
-    def fs_train(self, model, optimizer, train_x, train_y, n_way, n_support, n_query, max_epoch, epoch_size):
+    def fs_train(self):
         """
         Trains the protonet
         Args:
@@ -126,25 +125,48 @@ class Trainer:
             epoch_size (int): episodes per epoch
         """
         # divide the learning rate by 2 at each epoch, as suggested in paper
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
-        epoch = 0  # epochs done so far
-        stop = False  # status to know when to stop
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
+        # epoch = 0  # epochs done so far
+        # stop = False  # status to know when to stop
 
-        while epoch < max_epoch and not stop:
+        train_data = FewShotDataset(self.config["dataset_path"],
+                                    num_support=self.config["num_support"],
+                                    num_query=self.config["num_query"],
+                                    robust=True,
+                                    snr_range=self.config["snr_range"])
+        train_dataset_size = len(train_data)
+        train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
+
+        model = load_protonet_conv(
+            x_dim=(1, 512, 256),
+            hid_dim=32,
+            z_dim=11,
+        )
+
+        optimizer = Adam(model.parameters(), lr=0.001)
+        scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
+
+        for epoch in range(self.config["epoch"]):
+            print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+            print('-' * 10)
+
+            # while epoch < max_epoch and not stop:
             train_loss = 0.0
             train_acc = 0.0
 
-            for episode in tqdm.tnrange(epoch_size, desc="Epoch {:d} train".format(epoch + 1)):
-                sample = extract_train_sample(n_way, n_support, n_query, train_x, train_y)
+            for episode, sample in enumerate(tqdm.tqdm(train_dataloader)):
                 optimizer.zero_grad()
                 loss, output = model.proto_train(sample)
                 train_loss += output['loss']
                 train_acc += output['acc']
                 loss.backward()
                 optimizer.step()
-            epoch_loss = train_loss / epoch_size
-            epoch_acc = train_acc / epoch_size
-            print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
 
-            epoch += 1
+
+            epoch_loss = train_loss / episode
+            epoch_acc = train_acc / episode
+            print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
             scheduler.step()
+
+            torch.save(model.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
+            print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
