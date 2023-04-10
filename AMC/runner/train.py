@@ -107,34 +107,20 @@ class Trainer:
 
             self.scheduler.step()
 
+            os.makedirs(self.config["save_path"], exist_ok=True)
             torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
 
     def fs_train(self):
-        """
-        Trains the protonet
-        Args:
-            model
-            optimizer
-            train_x (np.array): dataloader dataframes of training set
-            train_y(np.array): labels of training set
-            n_way (int): number of classes in a classification task
-            n_support (int): number of labeled examples per class in the support set
-            n_query (int): number of labeled examples per class in the query set
-            max_epoch (int): max epochs to train on
-            epoch_size (int): episodes per epoch
-        """
-        # divide the learning rate by 2 at each epoch, as suggested in paper
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
-        # epoch = 0  # epochs done so far
-        # stop = False  # status to know when to stop
+        print("Cuda: ", torch.cuda.is_available())
+        print("Device id: ", self.device_ids[0])
 
         train_data = FewShotDataset(self.config["dataset_path"],
                                     num_support=self.config["num_support"],
                                     num_query=self.config["num_query"],
                                     robust=True,
                                     snr_range=self.config["snr_range"])
-        train_dataset_size = len(train_data)
+
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
         model = load_protonet_conv(
@@ -168,5 +154,6 @@ class Trainer:
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
             scheduler.step()
 
+            os.makedirs(self.config["save_path"], exist_ok=True)
             torch.save(model.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))

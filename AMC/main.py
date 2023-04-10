@@ -12,5 +12,5 @@ if __name__ == '__main__':
     # Few shot learning
     trainer = Trainer("config.yaml")
     trainer.fs_train()
-    # tester = Tester("config.yaml")
-    # tester.fs_test()
+    tester = Tester("config.yaml")
+    tester.fs_test()
