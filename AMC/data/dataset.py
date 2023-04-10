@@ -142,10 +142,11 @@ class AMCTestDataset(data.Dataset):
 
 
 class FewShotDataset(data.Dataset):
-    def __init__(self, root_path, num_support, num_query, robust=False, snr_range=None):
+    def __init__(self, root_path, num_support, num_query, mode='train', robust=False, snr_range=None):
         self.root_path = root_path
         self.robust = robust
         self.snr_range = snr_range
+        self.mode = mode
         self.config = get_config('config.yaml')
 
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
@@ -162,13 +163,22 @@ class FewShotDataset(data.Dataset):
             self.onehot = self.onehot[snr_mask]
             self.snr = self.snr[snr_mask]
 
-        # Sampling easy class
-        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
-                             range(len(self.onehot))])
+        # Sampling class
+        if mode == 'train':
+            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
+                                 range(len(self.onehot))])
+            self.num_modulation = len(self.config['easy_class_indice'])
+        elif mode == 'test':
+            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in
+                                 range(len(self.onehot))])
+            self.num_modulation = len(self.config['difficult_class_indice'])
+        else:
+            print('Mode argument error!')
+            exit()
+
         self.iq = self.iq[mod_mask]
         self.onehot = self.onehot[mod_mask]
         self.snr = self.snr[mod_mask]
-        self.num_modulation = len(self.config['easy_class_indice'])
 
         # Extract class labels
         self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]

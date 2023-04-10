@@ -7,8 +7,9 @@ from argparse import ArgumentParser
 import tqdm
 import numpy as np
 from runner.utils import get_config, model_selection
-from data.dataset import AMCTestDataset
-# from utils import extract_test_sample
+from data.dataset import AMCTestDataset, FewShotDataset
+from models.proto import load_protonet_conv
+
 
 
 class Tester:
@@ -101,53 +102,77 @@ class Tester:
             f.close()
 
     def fs_test(self):
-        """
-        Tests the protonet
-        Args:
-            model: trained model
-            test_x (np.array): dataloader dataframes of testing set
-            test_y (np.array): labels of testing set
-            n_way (int): number of classes in a classification task
-            n_support (int): number of labeled examples per class in the support set
-            n_query (int): number of labeled examples per class in the query set
-            test_episode (int): number of episodes to test on
-        """
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+        n_way = len(self.config['difficult_class_indice'])
 
-        conf_mat = torch.zeros(n_way, n_way)
+        test_data = FewShotDataset(self.config["dataset_path"],
+                                   num_support=self.config["num_support"],
+                                   num_query=self.config["num_query"],
+                                   robust=True, mode='test',
+                                   snr_range=self.config["snr_range"])
+        test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
+
+        model = load_protonet_conv(
+            x_dim=(1, 512, 256),
+            hid_dim=32,
+            z_dim=11,
+        )
+        model.load_state_dict(torch.load(self.model_path))
+
+        #conf_mat = torch.zeros(n_way, n_way)
         running_loss = 0.0
         running_acc = 0.0
 
-        '''
-        Modified
-        # Extract sample just once
-        '''
-        sample = extract_test_sample(n_way, n_support, n_query, test_x, test_y)
-        query_samples = sample['query']
-
-        # Create target domain Prototype Network with support set(target domain)
-        z_proto = model.create_protoNet(sample)
-
-        total_count = 0
         model.eval()
         with torch.no_grad():
-            for label, sample in enumerate(tqdm.tqdm(query_samples)):
-                for i in range(0, len(sample) // n_way):
-                    if self.use_cuda:
-                        x = sample.to(self.device_ids[0])
-                    else:
-                        x = sample
+            for episode, sample in enumerate(tqdm.tqdm(test_dataloader)):
+                output = model.proto_test(sample)
 
-                    output = model.proto_test(x[i * n_way:(i + 1) * n_way], z_proto, n_way, label)
-                    a = output['y_hat'].cpu().int()
-                    for cls in range(n_way):
-                        conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
+                a = output['y_hat'].cpu().int()
+                # for cls in range(n_way):
+                #     conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
 
-                    running_acc += output['acc']
-                    total_count += 1
+                running_acc += output['acc']
 
-        avg_acc = running_acc / total_count
+        avg_acc = running_acc / episode
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
-        return (conf_mat / (test_episode * n_query), avg_acc)
+
+
+    # def fs_test_once(self):
+    #     print("Cuda: ", torch.cuda.is_available())
+    #     print("Device id: ", self.device_ids[0])
+    #
+    #     conf_mat = torch.zeros(n_way, n_way)
+    #     running_loss = 0.0
+    #     running_acc = 0.0
+    #
+    #     sample = extract_test_sample(n_way, n_support, n_query, test_x, test_y)
+    #     query_samples = sample['query']
+    #
+    #     # Create target domain Prototype Network with support set(target domain)
+    #     z_proto = model.create_protoNet(sample)
+    #
+    #     total_count = 0
+    #     model.eval()
+    #     with torch.no_grad():
+    #         for label, sample in enumerate(tqdm.tqdm(query_samples)):
+    #             for i in range(0, len(sample) // n_way):
+    #                 if self.use_cuda:
+    #                     x = sample.to(self.device_ids[0])
+    #                 else:
+    #                     x = sample
+    #
+    #                 output = model.proto_test(x[i * n_way:(i + 1) * n_way], z_proto, n_way, label)
+    #                 a = output['y_hat'].cpu().int()
+    #                 for cls in range(n_way):
+    #                     conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
+    #
+    #                 running_acc += output['acc']
+    #                 total_count += 1
+    #
+    #     avg_acc = running_acc / total_count
+    #     print('Test results -- Acc: {:.4f}'.format(avg_acc))
+    #     return (conf_mat / (test_episode * n_query), avg_acc)
+
 
