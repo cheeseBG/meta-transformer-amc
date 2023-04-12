@@ -4,6 +4,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
 from runner.utils import euclidean_dist, get_config
+from models.robustcnn import *
+
 
 class ProtoNet(nn.Module):
     def __init__(self, encoder):
@@ -228,6 +230,20 @@ def load_protonet_conv(**kwargs):
         conv_block(hid_dim, hid_dim),
         conv_block(hid_dim, hid_dim),
         conv_block(hid_dim, z_dim),
+        Flatten()
+    )
+
+    return ProtoNet(encoder)
+
+
+def load_protonet_robustcnn():
+    encoder = nn.Sequential(
+        ABlock(),
+        BBlock(),
+        nn.AvgPool2d(2, 1),
+        CBlock1(),
+        CBlock2(),
+        nn.AdaptiveAvgPool2d((1, 1)),
         Flatten()
     )
 

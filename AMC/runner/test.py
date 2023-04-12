@@ -8,7 +8,7 @@ import tqdm
 import numpy as np
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
-from models.proto import load_protonet_conv
+from models.proto import load_protonet_conv, load_protonet_robustcnn
 from plot.conf_matrix import plot_confusion_matrix
 
 
@@ -113,11 +113,17 @@ class Tester:
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
-        model = load_protonet_conv(
-            x_dim=(1, 512, 256),
-            hid_dim=32,
-            z_dim=11,
-        )
+        model_name = self.config['fs_model']
+
+        if model_name == 'rewis':
+            model = load_protonet_conv(
+                x_dim=(1, 512, 256),
+                hid_dim=32,
+                z_dim=11,
+            )
+        elif model_name == 'robustcnn':
+            model = load_protonet_robustcnn()
+
         model.load_state_dict(torch.load(self.model_path))
 
         conf_mat = torch.zeros(n_way, n_way)
@@ -152,11 +158,17 @@ class Tester:
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
-        model = load_protonet_conv(
-            x_dim=(1, 512, 256),
-            hid_dim=32,
-            z_dim=11,
-        )
+        model_name = self.config['fs_model']
+
+        if model_name == 'rewis':
+            model = load_protonet_conv(
+                x_dim=(1, 512, 256),
+                hid_dim=32,
+                z_dim=11,
+            )
+        elif model_name == 'robustcnn':
+            model = load_protonet_robustcnn()
+
         model.load_state_dict(torch.load(self.model_path))
 
         conf_mat = torch.zeros(n_way, n_way)
