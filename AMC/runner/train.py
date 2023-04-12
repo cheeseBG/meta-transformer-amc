@@ -8,7 +8,7 @@ from torch.optim import lr_scheduler, Adam
 import tqdm
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTrainDataset, FewShotDataset
-from models.proto import load_protonet_conv
+from models.proto import load_protonet_conv, load_protonet_robustcnn
 import wandb
 
 class Trainer:
@@ -123,14 +123,21 @@ class Trainer:
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
-        model = load_protonet_conv(
-            x_dim=(1, 512, 256),
-            hid_dim=32,
-            z_dim=11,
-        )
+        model_name = self.config['fs_model']
 
-        optimizer = Adam(model.parameters(), lr=0.001)
-        scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
+        if model_name == 'rewis':
+            model = load_protonet_conv(
+                x_dim=(1, 512, 256),
+                hid_dim=32,
+                z_dim=11,
+            )
+            optimizer = Adam(model.parameters(), lr=0.001)
+            scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
+
+        elif model_name == 'robustcnn':
+            model = load_protonet_robustcnn()
+            optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
         for epoch in range(self.config["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
