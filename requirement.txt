@@ -3,3 +3,4 @@ tqdm==4.60.0
 pyyaml==6.0
 matplotlib
 scikit-learn
+wandb
