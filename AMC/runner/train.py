@@ -98,15 +98,15 @@ class Trainer:
             torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
 
-    def fs_train(self):
+    def fs_train(self, now):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
         wandb.init(
             # set the wandb project where this run will be logged
             project="AMC_few-shot",
-            group=str(datetime.now()),
-            name=self.config['fs_model'],
+            group=self.config['fs_model'],
+            name=now,
             notes=f'num_support:{self.config["num_support"]},'
                   f' num_query:{self.config["num_query"]},'
                   f' robust:{True},'
@@ -163,8 +163,8 @@ class Trainer:
                 optimizer.step()
 
 
-            epoch_loss = train_loss / episode
-            epoch_acc = train_acc / episode
+            epoch_loss = train_loss / (episode+1)
+            epoch_acc = train_acc / (episode+1)
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
             scheduler.step()
 
