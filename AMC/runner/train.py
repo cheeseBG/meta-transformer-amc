@@ -1,15 +1,16 @@
 import os
-
 import torch
 import torch.nn as nn
 import torch.utils.data as DATA
 import torch.nn.functional as F
-from torch.optim import lr_scheduler, Adam
 import tqdm
+import wandb
+from datetime import datetime
+from torch.optim import lr_scheduler, Adam
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTrainDataset, FewShotDataset
 from models.proto import load_protonet_conv, load_protonet_robustcnn
-import wandb
+
 
 class Trainer:
     def __init__(self, config, model_path=None):
@@ -37,19 +38,6 @@ class Trainer:
     def train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
-
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="AMC_few-shot",
-
-            # track hyperparameters and run metadata
-            config={
-                "learning_rate": self.config["lr"],
-                "architecture": "RobustCNN",
-                "dataset": "RML2018",
-                "epochs": self.config["epoch"],
-            }
-        )
 
         if not os.path.exists(self.config["save_path"]):
             os.mkdir(self.config["save_path"])
@@ -103,7 +91,6 @@ class Trainer:
             epoch_loss = train_loss / train_dataset_size
             print('epoch train loss: {:.8f}'.format(epoch_loss))
             print(f'Accuracy: : {correct / total}')
-            wandb.log({"acc": correct, "loss": epoch_loss})
 
             self.scheduler.step()
 
@@ -114,6 +101,26 @@ class Trainer:
     def fs_train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project="AMC_few-shot",
+            group=str(datetime.now()),
+            name=self.config['fs_model'],
+            notes=f'num_support:{self.config["num_support"]},'
+                  f' num_query:{self.config["num_query"]},'
+                  f' robust:{True},'
+                  f' snr_range:{self.config["snr_range"]},'
+                  f' train_class_indice:{self.config["easy_class_indice"]}',
+
+            # track hyperparameters and run metadata
+            config={
+                "learning_rate": self.config["lr"],
+                "architecture": self.config['fs_model'],
+                "dataset": "RML2018",
+                "epochs": self.config["epoch"],
+            }
+        )
 
         train_data = FewShotDataset(self.config["dataset_path"],
                                     num_support=self.config["num_support"],
@@ -160,6 +167,8 @@ class Trainer:
             epoch_acc = train_acc / episode
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
             scheduler.step()
+
+            wandb.log({"acc": epoch_acc, "loss": epoch_loss})
 
             os.makedirs(self.config["save_path"], exist_ok=True)
             torch.save(model.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
