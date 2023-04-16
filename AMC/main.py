@@ -3,6 +3,7 @@ import argparse
 from runner.train import Trainer
 from runner.test import Tester
 from runner.utils import CustomFormatter
+from datetime import datetime
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
@@ -17,24 +18,29 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # For wandb group-name
+    now = str(datetime.now())
+
     # Supervised learning
     if args.lr_mode == 'sv':
         logger.info('Start supervised learning')
         trainer = Trainer("config.yaml")
         trainer.train()
+
         tester = Tester("config.yaml", per_snr=True)
         tester.test()
+
+    # Few shot learning
     elif args.lr_mode == 'fs':
-        # Few shot learning
         logger.info('Start few-shot learning')
         trainer = Trainer("config.yaml")
-        trainer.fs_train()
+        trainer.fs_train(now)
 
         tester = Tester("config.yaml")
         logger.info('Original Test')
-        tester.fs_test()
+        tester.fs_test(now)
         logger.info('New Metric Test ')
-        tester.fs_test_once()
+        tester.fs_test_once(now)
     else:
         logger.error('Wrong argument!')
 

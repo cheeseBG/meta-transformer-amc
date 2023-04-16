@@ -1,15 +1,13 @@
 import os
-
 import torch
 import torch.utils.data as DATA
 import torch.nn.functional as F
-from argparse import ArgumentParser
 import tqdm
-import numpy as np
+import wandb
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
-from models.proto import load_protonet_conv
-
+from models.proto import load_protonet_conv, load_protonet_robustcnn
+from plot.conf_matrix import plot_confusion_matrix
 
 
 class Tester:
@@ -101,9 +99,31 @@ class Tester:
                 f.write(f"SNR {snr} Accuracy: {correct / total}\n")
             f.close()
 
-    def fs_test(self):
+    def fs_test(self, now):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+
+        # Wandb
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project="AMC_few-shot",
+            group=self.config['fs_model'],
+            name=now,
+            notes=f'num_support:{self.config["num_support"]},'
+                  f' num_query:{self.config["num_query"]},'
+                  f' robust:{True},'
+                  f' snr_range:{self.config["snr_range"]},'
+                  f' train_class_indice:{self.config["easy_class_indice"]}',
+
+            # track hyperparameters and run metadata
+            config={
+                "learning_rate": self.config["lr"],
+                "architecture": self.config['fs_model'],
+                "dataset": "RML2018",
+                "epochs": self.config["epoch"],
+            }
+        )
+
         n_way = len(self.config['difficult_class_indice'])
 
         test_data = FewShotDataset(self.config["dataset_path"],
@@ -113,14 +133,20 @@ class Tester:
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
-        model = load_protonet_conv(
-            x_dim=(1, 512, 256),
-            hid_dim=32,
-            z_dim=11,
-        )
+        model_name = self.config['fs_model']
+
+        if model_name == 'rewis':
+            model = load_protonet_conv(
+                x_dim=(1, 512, 256),
+                hid_dim=32,
+                z_dim=11,
+            )
+        elif model_name == 'robustcnn':
+            model = load_protonet_robustcnn()
+
         model.load_state_dict(torch.load(self.model_path))
 
-        #conf_mat = torch.zeros(n_way, n_way)
+        conf_mat = torch.zeros(n_way, n_way)
         running_loss = 0.0
         running_acc = 0.0
 
@@ -130,17 +156,43 @@ class Tester:
                 output = model.proto_test(sample)
 
                 a = output['y_hat'].cpu().int()
-                # for cls in range(n_way):
-                #     conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
+                for cls in range(n_way):
+                    conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
 
                 running_acc += output['acc']
 
-        avg_acc = running_acc / episode
+        avg_acc = running_acc / (episode+1)
+        plot_confusion_matrix(conf_mat,
+                              classes=[self.config['total_class'][cls] for cls in self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
+        wandb.log({"test_acc": avg_acc})
 
-    def fs_test_once(self):
+    def fs_test_once(self, now):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+
+        # Wandb
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project="AMC_few-shot",
+            group=self.config['fs_model'],
+            name=now,
+            notes=f'num_support:{self.config["num_support"]},'
+                  f' num_query:{self.config["num_query"]},'
+                  f' robust:{True},'
+                  f' snr_range:{self.config["snr_range"]},'
+                  f' train_class_indice:{self.config["easy_class_indice"]}',
+
+            # track hyperparameters and run metadata
+            config={
+                "learning_rate": self.config["lr"],
+                "architecture": self.config['fs_model'],
+                "dataset": "RML2018",
+                "epochs": self.config["epoch"],
+            }
+        )
+
+        n_way = len(self.config['difficult_class_indice'])
 
         test_data = FewShotDataset(self.config["dataset_path"],
                                    num_support=self.config["num_support"],
@@ -149,13 +201,20 @@ class Tester:
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
-        model = load_protonet_conv(
-            x_dim=(1, 512, 256),
-            hid_dim=32,
-            z_dim=11,
-        )
+        model_name = self.config['fs_model']
+
+        if model_name == 'rewis':
+            model = load_protonet_conv(
+                x_dim=(1, 512, 256),
+                hid_dim=32,
+                z_dim=11,
+            )
+        elif model_name == 'robustcnn':
+            model = load_protonet_robustcnn()
+
         model.load_state_dict(torch.load(self.model_path))
 
+        conf_mat = torch.zeros(n_way, n_way)
         running_loss = 0.0
         running_acc = 0.0
         z_proto = None
@@ -168,9 +227,16 @@ class Tester:
                     z_proto = model.create_protoNet(sample)
 
                 output = model.proto_test_once(sample, z_proto)
+                a = output['y_hat'].cpu().int()
+                for cls in range(n_way):
+                    conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
                 running_acc += output['acc']
 
-        avg_acc = running_acc / episode
+        avg_acc = running_acc / (episode+1)
+        plot_confusion_matrix(conf_mat,
+                              classes=[self.config['total_class'][cls] for cls in
+                                       self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
+        wandb.log({"new_test__acc": avg_acc})
 
 

@@ -9,7 +9,7 @@ from data.transform import AMCTransform
 from runner.utils import get_config
 from numpy import argwhere
 
-random.seed(100)
+random.seed(50)
 
 
 class AMCTrainDataset(data.Dataset):
