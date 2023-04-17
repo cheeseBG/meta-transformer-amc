@@ -5,11 +5,11 @@ from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader
 from vit_pytorch import ViT
 import numpy as np
-from ..data.dataset import FewShotDataset
+from data.dataset import FewShotDataset
 import torch.utils.data as DATA
-from ..runner.utils import get_config
+from runner.utils import get_config
 
-config = get_config['config.yaml']
+config = get_config('config.yaml')
 train_data = FewShotDataset(config["dataset_path"],
                             num_support=config["num_support"],
                             num_query=config["num_query"],
@@ -45,7 +45,7 @@ for epoch in range(num_epochs):
 
         for label in sample.keys():
             # Create a random support set
-            support_set = sample[label]['support']
+            support_set = np.array(sample[label]['support'])
 
             # Extract the support set embeddings using the ViT model
             support_set_embeddings = vit_model(support_set)
@@ -54,7 +54,7 @@ for epoch in range(num_epochs):
             prototypes = support_set_embeddings.mean(dim=0)
 
             # Extract the query set embeddings using the ViT model
-            query_set_embeddings = vit_model(sample[label]['query'])
+            query_set_embeddings = vit_model(np.array(sample[label]['query']))
 
             # Compute the distance between the query set and prototypes
             distances = torch.cdist(query_set_embeddings, prototypes.unsqueeze(0))

@@ -129,7 +129,6 @@ class Trainer:
                                     snr_range=self.config["snr_range"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
-
         model_name = self.config['fs_model']
 
         if model_name == 'rewis':
@@ -144,7 +143,7 @@ class Trainer:
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
             optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
         for epoch in range(self.config["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))

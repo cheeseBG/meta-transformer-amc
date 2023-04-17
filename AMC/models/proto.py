@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 from runner.utils import euclidean_dist, get_config
 from models.robustcnn import *
+from models.vit import *
 
 
 class ProtoNet(nn.Module):
@@ -190,6 +191,48 @@ class ProtoNet(nn.Module):
             'acc': acc_val.item(),
             'y_hat': y_hat
         }
+
+    def vit_test(self, sample):
+
+        # Load the pretrained weights (if necessary)
+        # vit_model.load_state_dict(torch.load("vit_model_weights.pth"))
+
+        # Set the model to evaluation mode
+        vit_model.eval()
+
+        # Create a random support set
+        support_set = torch.randn(5, 3, 32, 32)
+
+        # Extract the support set embeddings using the ViT model
+        with torch.no_grad():
+            support_set_embeddings = vit_model(support_set)
+
+        # Compute the prototype for each class
+        prototypes = support_set_embeddings.mean(dim=0)
+
+        # Test the model
+        accuracy = 0
+        num_samples = 0
+
+        for data, target in data_loader:
+            with torch.no_grad():
+                # Extract the query set embeddings using the ViT model
+                query_set_embeddings = vit_model(data)
+
+                # Compute the distance between the query set and prototypes
+                distances = torch.cdist(query_set_embeddings, prototypes.unsqueeze(0))
+
+                # Predict the class with the closest prototype
+                predictions = torch.argmin(distances, dim=1)
+
+                # Compute the accuracy
+                accuracy += (predictions == target).sum().item()
+                num_samples += data.size(0)
+
+        # Calculate the overall accuracy
+        overall_accuracy = accuracy / num_samples
+
+        print("Test accuracy: {:.2f}%".format(overall_accuracy * 100))
 
 
 class Flatten(nn.Module):
