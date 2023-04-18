@@ -162,8 +162,10 @@ class Tester:
                 running_acc += output['acc']
 
         avg_acc = running_acc / (episode+1)
-        plot_confusion_matrix(conf_mat,
-                              classes=[self.config['total_class'][cls] for cls in self.config['difficult_class_indice']])
+
+        if self.config['show_conf_matrix'] is True:
+            plot_confusion_matrix(conf_mat,
+                                  classes=[self.config['total_class'][cls] for cls in self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
         wandb.log({"test_acc": avg_acc})
 
@@ -233,9 +235,10 @@ class Tester:
                 running_acc += output['acc']
 
         avg_acc = running_acc / (episode+1)
-        plot_confusion_matrix(conf_mat,
-                              classes=[self.config['total_class'][cls] for cls in
-                                       self.config['difficult_class_indice']])
+        if self.config['show_conf_matrix'] is True:
+            plot_confusion_matrix(conf_mat,
+                                  classes=[self.config['total_class'][cls] for cls in
+                                           self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
         wandb.log({"new_test__acc": avg_acc})
 

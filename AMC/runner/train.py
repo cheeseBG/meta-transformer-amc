@@ -119,6 +119,7 @@ class Trainer:
                 "architecture": self.config['fs_model'],
                 "dataset": "RML2018",
                 "epochs": self.config["epoch"],
+                "lr_gamma": self.config["lr_gamma"]
             }
         )
 
@@ -143,7 +144,7 @@ class Trainer:
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
             optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
 
         for epoch in range(self.config["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
