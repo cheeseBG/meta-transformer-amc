@@ -105,7 +105,9 @@ class Trainer:
         wandb.init(
             # set the wandb project where this run will be logged
             project="AMC_few-shot",
-            group=self.config['fs_model'],
+            # group=self.config['fs_model'],
+            # group="Test Sweep",
+            group="Test Sweep with difficult to easy",
             name=now,
             notes=f'num_support:{self.config["num_support"]},'
                   f' num_query:{self.config["num_query"]},'
@@ -115,13 +117,21 @@ class Trainer:
 
             # track hyperparameters and run metadata
             config={
-                "learning_rate": self.config["lr"],
+                # "learning_rate": self.config["lr"],
                 "architecture": self.config['fs_model'],
                 "dataset": "RML2018",
-                "epochs": self.config["epoch"],
+                # "epochs": self.config["epoch"],
+
+                # "learning_rate": 0.01,
+                # "momentum": 0.9,
+                # "batch_size": 128,
+                # "epochs": 30,
+                # "scheduler_step_size": 10,
+                # "scheduler_gamma":0.1
+
             }
         )
-
+        w_config = wandb.config
         train_data = FewShotDataset(self.config["dataset_path"],
                                     num_support=self.config["num_support"],
                                     num_query=self.config["num_query"],
@@ -129,6 +139,8 @@ class Trainer:
                                     snr_range=self.config["snr_range"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
+
+        print(w_config)
 
         model_name = self.config['fs_model']
 
@@ -143,11 +155,15 @@ class Trainer:
 
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
-            optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+            # optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
+            # scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+            optimizer = torch.optim.SGD(model.parameters(), lr=w_config["learning_rate"], momentum=w_config["momentum"])
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=w_config["scheduler_step_size"], gamma=w_config["scheduler_gamma"])
 
-        for epoch in range(self.config["epoch"]):
-            print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+        # for epoch in range(self.config["epoch"]):
+        for epoch in range(w_config["epochs"]):
+        #   print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+            print('Epoch {}/{}'.format(epoch + 1, w_config["epochs"]))
             print('-' * 10)
 
             # while epoch < max_epoch and not stop:

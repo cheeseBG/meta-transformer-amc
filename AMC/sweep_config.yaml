@@ -1,0 +1,49 @@
+command:
+  - python
+  - main.py
+  - fs
+
+project: AMC_few-shot
+name: test sweep bayes
+
+#method: grid
+#
+#parameters:
+#  learning_rate:
+#      values : [1e-2, 1e-3, 1e-4, 1e-5]
+#  momentum :
+#    values : [0.9, 0.95]
+#  batch_size:
+#    values: [32, 64, 128]
+#  epochs:
+#    values: [10, 30, 50]
+#  scheduler_step_size:
+#    values: [10, 20, 30]
+#  scheduler_gamma:
+#    values: [ 0.1, 0.3, 0.5 ]
+
+method: bayes
+
+metric:
+  name: test_acc
+  goal: maximize
+
+parameters:
+  learning_rate:
+    distribution: uniform
+    min: 1e-6
+    max: 1e-2
+  momentum:
+    values : [0.9, 0.95]
+  batch_size:
+    values: [ 32, 64, 128 ]
+  epochs:
+    values: [ 10, 30, 50 ]
+  scheduler_step_size:
+    distribution: uniform
+    min: 1
+    max: 100
+  scheduler_gamma:
+    distribution: uniform
+    min: 0.1
+    max: 0.9

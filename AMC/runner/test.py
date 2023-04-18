@@ -107,7 +107,9 @@ class Tester:
         wandb.init(
             # set the wandb project where this run will be logged
             project="AMC_few-shot",
-            group=self.config['fs_model'],
+            # group=self.config['fs_model'],
+            # group="Test Sweep",
+            group="Test Sweep with difficult to easy",
             name=now,
             notes=f'num_support:{self.config["num_support"]},'
                   f' num_query:{self.config["num_query"]},'
@@ -117,10 +119,10 @@ class Tester:
 
             # track hyperparameters and run metadata
             config={
-                "learning_rate": self.config["lr"],
+                # "learning_rate": self.config["lr"],
                 "architecture": self.config['fs_model'],
                 "dataset": "RML2018",
-                "epochs": self.config["epoch"],
+                # "epochs": self.config["epoch"],
             }
         )
 
@@ -162,8 +164,8 @@ class Tester:
                 running_acc += output['acc']
 
         avg_acc = running_acc / (episode+1)
-        plot_confusion_matrix(conf_mat,
-                              classes=[self.config['total_class'][cls] for cls in self.config['difficult_class_indice']])
+        # plot_confusion_matrix(conf_mat,
+        #                       classes=[self.config['total_class'][cls] for cls in self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
         wandb.log({"test_acc": avg_acc})
 
@@ -175,7 +177,8 @@ class Tester:
         wandb.init(
             # set the wandb project where this run will be logged
             project="AMC_few-shot",
-            group=self.config['fs_model'],
+            # group=self.config['fs_model'],
+            group="Test Sweep",
             name=now,
             notes=f'num_support:{self.config["num_support"]},'
                   f' num_query:{self.config["num_query"]},'
@@ -185,10 +188,10 @@ class Tester:
 
             # track hyperparameters and run metadata
             config={
-                "learning_rate": self.config["lr"],
+                # "learning_rate": self.config["lr"],
                 "architecture": self.config['fs_model'],
                 "dataset": "RML2018",
-                "epochs": self.config["epoch"],
+                # "epochs": self.config["epoch"],
             }
         )
 
@@ -233,9 +236,9 @@ class Tester:
                 running_acc += output['acc']
 
         avg_acc = running_acc / (episode+1)
-        plot_confusion_matrix(conf_mat,
-                              classes=[self.config['total_class'][cls] for cls in
-                                       self.config['difficult_class_indice']])
+        # plot_confusion_matrix(conf_mat,
+        #                       classes=[self.config['total_class'][cls] for cls in
+        #                                self.config['difficult_class_indice']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
         wandb.log({"new_test__acc": avg_acc})
 
