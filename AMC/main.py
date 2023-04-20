@@ -36,11 +36,11 @@ if __name__ == '__main__':
         trainer = Trainer("config.yaml")
         trainer.fs_train(now)
 
-        tester = Tester("config.yaml")
-        logger.info('Original Test')
-        tester.fs_test(now)
-        logger.info('New Metric Test ')
-        tester.fs_test_once(now)
+        # tester = Tester("config.yaml")
+        # logger.info('Original Test')
+        # tester.fs_test(now)
+        # logger.info('New Metric Test ')
+        # tester.fs_test_once(now)
     else:
         logger.error('Wrong argument!')
 

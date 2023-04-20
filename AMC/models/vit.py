@@ -42,6 +42,9 @@ class ViT(nn.Module):
             x = layer(x)
 
         x = self.norm(x)
+
+        # flatten
+        x = x.view(x.size(0), -1)
         return x
 
 
