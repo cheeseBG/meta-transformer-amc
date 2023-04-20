@@ -9,7 +9,7 @@ from datetime import datetime
 from torch.optim import lr_scheduler, Adam
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTrainDataset, FewShotDataset
-from models.proto import load_protonet_conv, load_protonet_robustcnn
+from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 
 
 class Trainer:
@@ -144,6 +144,11 @@ class Trainer:
             model = load_protonet_robustcnn()
             optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+
+        elif model_name == 'vit':
+            model = load_protonet_vit()
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
         for epoch in range(self.config["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))

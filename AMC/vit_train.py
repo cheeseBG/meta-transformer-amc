@@ -3,7 +3,8 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader
-from vit_pytorch import ViT
+#from vit_pytorch import ViT
+from models.vit import ViT
 import numpy as np
 from data.dataset import FewShotDataset
 import torch.utils.data as DATA
@@ -19,15 +20,25 @@ train_data = FewShotDataset(config["dataset_path"],
 train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
 # Initialize the ViT model as the base encoder
+# vit_model = ViT(
+#     image_size=1024,
+#     patch_size=4,
+#     num_classes=11,
+#     dim=768,
+#     depth=12,
+#     heads=12,
+#     mlp_dim=3072
+# )
 vit_model = ViT(
-    image_size=1024,
+    in_channels=1,
     patch_size=4,
-    num_classes=11,
-    dim=768,
-    depth=12,
-    heads=12,
-    mlp_dim=3072
+    num_classes=13,
+    embed_dim=4,
+    num_layers=2,
+    num_heads=4,
+    mlp_dim=2
 )
+
 
 # Set the optimizer and the learning rate scheduler
 optimizer = torch.optim.Adam(vit_model.parameters(), lr=0.001)
@@ -42,32 +53,55 @@ for epoch in range(num_epochs):
     epoch_loss = 0
 
     for sample in train_dataloader:
+        n_way = len(sample.keys())
+        n_support = 5
+        n_query = 10
 
+        """
+        support shape: [K_way, num_support, 1, I/Q, data_length]
+        query shape: [K_way, num_query, 1, I/Q, data_length]
+        """
+        x_support = None
+        x_query = None
         for label in sample.keys():
-            # Create a random support set
-            support_set = np.array(sample[label]['support'])
+            if x_support is None:
+                x_support = np.array([np.array(iq) for iq in sample[label]['support']])
+            else:
+                x_support = np.vstack([x_support, np.array([np.array(iq) for iq in sample[label]['support']])])
+            if x_query is None:
+                x_query = np.array([np.array(iq) for iq in sample[label]['query']])
+            else:
+                x_query = np.vstack([x_query, np.array([np.array(iq) for iq in sample[label]['query']])])
 
-            # Extract the support set embeddings using the ViT model
-            support_set_embeddings = vit_model(support_set)
+        x_support = torch.from_numpy(x_support)
+        x_query = torch.from_numpy(x_query)
 
-            # Compute the prototype for each class
-            prototypes = support_set_embeddings.mean(dim=0)
 
-            # Extract the query set embeddings using the ViT model
-            query_set_embeddings = vit_model(np.array(sample[label]['query']))
+        # Extract the support set embeddings using the ViT model
+        support_set_embeddings = vit_model(x_support)
+        support_set_embeddings = support_set_embeddings.view(n_way, n_support, support_set_embeddings.size(-1))
 
-            # Compute the distance between the query set and prototypes
-            distances = torch.cdist(query_set_embeddings, prototypes.unsqueeze(0))
+        # Compute the prototype for each class
+        prototypes = support_set_embeddings.mean(dim=1)
 
-            # Calculate the loss using the cross-entropy loss
-            loss = F.cross_entropy(-distances, label)
+        # Extract the query set embeddings using the ViT model
+        query_set_embeddings = vit_model(x_query)
 
-            # Update the model parameters
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+        # Compute the distance between the query set and prototypes
+        distances = torch.cdist(query_set_embeddings, prototypes.unsqueeze(0))
+        print(distances.shape)
+        exit()
+        labels = np.array([[float(val)] for val in sample.keys() for i in range(10)])
 
-            epoch_loss += loss.item()
+        # Calculate the loss using the cross-entropy loss
+        loss = F.cross_entropy(-distances, np.array(labels))
+
+        # Update the model parameters
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss.item()
 
     # Update the learning rate
     lr_scheduler.step()
