@@ -130,7 +130,7 @@ class Tester:
                                    num_support=self.config["num_support"],
                                    num_query=self.config["num_query"],
                                    robust=True, mode='test',
-                                   snr_range=self.config["snr_range"])
+                                   snr_range=self.config["test_snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
         model_name = self.config['fs_model']
@@ -200,7 +200,7 @@ class Tester:
                                    num_support=self.config["num_support"],
                                    num_query=self.config["num_query"],
                                    robust=True, mode='test',
-                                   snr_range=self.config["snr_range"])
+                                   snr_range=self.config["test_snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
         model_name = self.config['fs_model']
