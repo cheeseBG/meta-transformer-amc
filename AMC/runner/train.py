@@ -147,8 +147,8 @@ class Trainer:
 
         elif model_name == 'vit':
             model = load_protonet_vit()
-            optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
         for epoch in range(self.config["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
