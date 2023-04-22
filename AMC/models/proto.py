@@ -296,11 +296,11 @@ def load_protonet_robustcnn():
 def load_protonet_vit():
     encoder = ViT(
         in_channels=1,
-        patch_size=4,
+        patch_size=2,
         num_classes=13,
         embed_dim=64,
-        num_layers=32,
-        num_heads=64,
-        mlp_dim=32
+        num_layers=4,
+        num_heads=4,
+        mlp_dim=4
     )
     return ProtoNet(encoder)
