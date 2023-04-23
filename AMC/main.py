@@ -32,15 +32,15 @@ if __name__ == '__main__':
 
     # Few shot learning
     elif args.lr_mode == 'fs':
-        logger.info('Start few-shot learning')
-        trainer = Trainer("config.yaml")
-        trainer.fs_train(now)
+        # logger.info('Start few-shot learning')
+        # trainer = Trainer("config.yaml")
+        # trainer.fs_train(now)
 
-        # tester = Tester("config.yaml")
-        # logger.info('Original Test')
-        # tester.fs_test(now)
-        # logger.info('New Metric Test ')
-        # tester.fs_test_once(now)
+        tester = Tester("config.yaml")
+        logger.info('Original Test')
+        tester.fs_test(now)
+        logger.info('New Metric Test ')
+        tester.fs_test_once(now)
     else:
         logger.error('Wrong argument!')
 

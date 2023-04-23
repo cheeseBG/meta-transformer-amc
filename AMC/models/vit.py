@@ -18,12 +18,12 @@ class PatchEmbedding(nn.Module):
 
 
 class ViT(nn.Module):
-    def __init__(self, in_channels, embed_dim, num_layers, num_heads, mlp_dim, patch_size, num_classes=None):
+    def __init__(self, in_channels, embed_dim, num_layers, num_heads, mlp_dim, patch_size, in_size):
         super(ViT, self).__init__()
         self.patch_embed = PatchEmbedding(in_channels, patch_size, embed_dim)
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.pos_embed = nn.Parameter(torch.zeros(1, 1 + (4 * 1024) // (patch_size*patch_size), embed_dim))
+        self.pos_embed = nn.Parameter(torch.zeros(1, 1 + (in_size) // (patch_size*patch_size), embed_dim))
 
         self.layers = nn.ModuleList([])
         for _ in range(num_layers):
