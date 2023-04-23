@@ -26,7 +26,6 @@ class ProtoNet(nn.Module):
         n_support = self.config['num_support']
         n_query = self.config['num_query']
 
-
         """
         support shape: [K_way, num_support, 1, I/Q, data_length]
         query shape: [K_way, num_query, 1, I/Q, data_length]
@@ -58,7 +57,8 @@ class ProtoNet(nn.Module):
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
 
         # compute distances
-        dists = euclidean_dist(z_query, z_proto)
+        #dists = euclidean_dist(z_query, z_proto)
+        dists = torch.cdist(z_query, z_proto)
 
         # compute probabilities
         log_p_y = F.log_softmax(-dists, dim=1).view(n_way, n_query, -1)
@@ -141,7 +141,8 @@ class ProtoNet(nn.Module):
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
 
         # compute distances
-        dists = euclidean_dist(z_query, z_proto)
+        # dists = euclidean_dist(z_query, z_proto)
+        dists = torch.cdist(z_query, z_proto)
 
         # compute probabilities
         log_p_y = F.log_softmax(-dists, dim=1).view(n_way, n_query, -1)
@@ -179,7 +180,8 @@ class ProtoNet(nn.Module):
         z_query = self.encoder.forward(x_query)
 
         # compute distances
-        dists = euclidean_dist(z_query, z_proto)
+        # dists = euclidean_dist(z_query, z_proto)
+        dists = torch.cdist(z_query, z_proto)
 
         # compute probabilities
         log_p_y = F.log_softmax(-dists, dim=1).view(n_way, n_query, -1)
@@ -191,48 +193,6 @@ class ProtoNet(nn.Module):
             'acc': acc_val.item(),
             'y_hat': y_hat
         }
-
-    def vit_test(self, sample):
-
-        # Load the pretrained weights (if necessary)
-        # vit_model.load_state_dict(torch.load("vit_model_weights.pth"))
-
-        # Set the model to evaluation mode
-        vit_model.eval()
-
-        # Create a random support set
-        support_set = torch.randn(5, 3, 32, 32)
-
-        # Extract the support set embeddings using the ViT model
-        with torch.no_grad():
-            support_set_embeddings = vit_model(support_set)
-
-        # Compute the prototype for each class
-        prototypes = support_set_embeddings.mean(dim=0)
-
-        # Test the model
-        accuracy = 0
-        num_samples = 0
-
-        for data, target in data_loader:
-            with torch.no_grad():
-                # Extract the query set embeddings using the ViT model
-                query_set_embeddings = vit_model(data)
-
-                # Compute the distance between the query set and prototypes
-                distances = torch.cdist(query_set_embeddings, prototypes.unsqueeze(0))
-
-                # Predict the class with the closest prototype
-                predictions = torch.argmin(distances, dim=1)
-
-                # Compute the accuracy
-                accuracy += (predictions == target).sum().item()
-                num_samples += data.size(0)
-
-        # Calculate the overall accuracy
-        overall_accuracy = accuracy / num_samples
-
-        print("Test accuracy: {:.2f}%".format(overall_accuracy * 100))
 
 
 class Flatten(nn.Module):
@@ -296,11 +256,11 @@ def load_protonet_robustcnn():
 def load_protonet_vit():
     encoder = ViT(
         in_channels=1,
-        patch_size=2,
-        num_classes=13,
-        embed_dim=64,
-        num_layers=4,
+        patch_size=(2,8),
+        embed_dim=32,
+        num_layers=32,
         num_heads=4,
-        mlp_dim=4
+        mlp_dim=32,
+        in_size=2*1024
     )
     return ProtoNet(encoder)
