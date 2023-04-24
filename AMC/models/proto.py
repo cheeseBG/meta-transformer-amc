@@ -256,11 +256,11 @@ def load_protonet_robustcnn():
 def load_protonet_vit():
     encoder = ViT(
         in_channels=1,
-        patch_size=(2,8),
+        patch_size=(2, 8),
         embed_dim=32,
         num_layers=32,
         num_heads=4,
-        mlp_dim=32,
+        mlp_dim=64,
         in_size=2*1024
     )
     return ProtoNet(encoder)
