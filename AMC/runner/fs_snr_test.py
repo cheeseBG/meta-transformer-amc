@@ -37,6 +37,7 @@ class SNRTester:
         snr_range = range(self.config["test_snr_range"][0], self.config["test_snr_range"][1] + 1, 2)
 
         train_snr_range = ['-10to20']
+        sample_len = [1024, 512, 256, 128, 64]
 
         acc_per_train = []
         for t_snr in train_snr_range:
@@ -53,39 +54,42 @@ class SNRTester:
             m_path = os.path.join(self.model_path, str(t_snr), self.model_num)
             model.load_state_dict(torch.load(m_path))
 
-            f = open(os.path.join(os.path.dirname(m_path), "acc.txt"), "w")
-            acc_per_snr = []
+            #f = open(os.path.join(os.path.dirname(m_path), "acc.txt"), "w")
 
-            for snr in snr_range:
-                test_data = FewShotDataset(self.config["dataset_path"],
-                                           num_support=self.config["num_support"],
-                                           num_query=self.config["num_query"],
-                                           robust=True, mode='test',
-                                           snr_range=[snr, snr], divide=True)
-                test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
+            for s_len in sample_len:
+                acc_per_snr = []
+
+                for snr in snr_range:
+                    test_data = FewShotDataset(self.config["dataset_path"],
+                                               num_support=self.config["num_support"],
+                                               num_query=self.config["num_query"],
+                                               robust=True, mode='test',
+                                               snr_range=[snr, snr], divide=True,
+                                               sample_len=s_len)
+                    test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
 
-                conf_mat = torch.zeros(n_way, n_way)
-                running_loss = 0.0
-                running_acc = 0.0
+                    conf_mat = torch.zeros(n_way, n_way)
+                    running_loss = 0.0
+                    running_acc = 0.0
 
-                model.eval()
-                with torch.no_grad():
-                    for episode, sample in enumerate(tqdm.tqdm(test_dataloader)):
-                        output = model.proto_test(sample)
+                    model.eval()
+                    with torch.no_grad():
+                        for episode, sample in enumerate(tqdm.tqdm(test_dataloader)):
+                            output = model.proto_test(sample)
 
-                        a = output['y_hat'].cpu().int()
-                        for cls in range(n_way):
-                            conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
+                            a = output['y_hat'].cpu().int()
+                            for cls in range(n_way):
+                                conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
 
-                        running_acc += output['acc']
+                            running_acc += output['acc']
 
-                avg_acc = running_acc / (episode + 1)
-                acc_per_snr.append(avg_acc)
+                    avg_acc = running_acc / (episode + 1)
+                    acc_per_snr.append(avg_acc)
 
-                f.write(f"SNR {snr} Accuracy: {avg_acc}\n")
-            f.close()
-            acc_per_train.append(acc_per_snr)
+                    #f.write(f"SNR {snr} Accuracy: {avg_acc}\n")
+                #f.close()
+                acc_per_train.append(acc_per_snr)
 
         plt.rcParams['font.family'] = 'Arial'
         title_fontsize = 32
@@ -96,8 +100,8 @@ class SNRTester:
 
         markers = ['*', '>', 'x', '.', '^', '<']
 
-        for i, t_snr in enumerate(train_snr_range):
-            plt.plot(snr_range, acc_per_train[i], label=f'SNR={str(t_snr)}', marker=markers[i], markersize=16)
+        for i, s_len in enumerate(sample_len):
+            plt.plot(snr_range, acc_per_train[i], label=f'sample_len{str(s_len)}', marker=markers[i], markersize=16)
 
         plt.xlabel("Signal to Noise Ratio", fontsize=xlabel_fontsize)
         plt.ylabel("Classification Accuracy", fontsize=ylabel_fontsize)

@@ -144,7 +144,7 @@ class AMCTestDataset(data.Dataset):
 
 
 class FewShotDataset(data.Dataset):
-    def __init__(self, root_path, num_support, num_query, mode='train', robust=False, snr_range=None, divide=False):
+    def __init__(self, root_path, num_support, num_query, mode='train', robust=False, snr_range=None, divide=False, sample_len=1024):
         self.root_path = root_path
         self.robust = robust
         self.snr_range = snr_range
@@ -154,6 +154,7 @@ class FewShotDataset(data.Dataset):
         self.divide = divide
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
+        self.sample_len = sample_len
 
         self.iq = self.data['X']
         self.onehot = self.data['Y']
@@ -229,7 +230,8 @@ class FewShotDataset(data.Dataset):
 
                 # support set
                 support_indices = random.sample(label_indices, self.num_support)
-                support_set = [np.concatenate((self.iq[i].transpose(), np.flip(self.iq[i].transpose(), axis=1)), axis=0)
+                support_set = [np.concatenate((self.iq[i].transpose()[:, :self.sample_len],
+                                               np.flip(self.iq[i].transpose()[:, :self.sample_len], axis=1)), axis=0)
                                for i in support_indices]
                 sample[label]['support'] = support_set
 
@@ -260,11 +262,12 @@ class FewShotDataset(data.Dataset):
 
 
 class FewShotDatasetForOnce(data.Dataset):
-    def __init__(self, root_path, num_support, num_query, robust=False, snr_range=None):
+    def __init__(self, root_path, num_support, num_query, robust=False, snr_range=None, sample_len=1024):
         self.root_path = root_path
         self.robust = robust
         self.snr_range = snr_range
         self.config = get_config('config.yaml')
+        self.sample_len = sample_len
 
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
@@ -314,7 +317,8 @@ class FewShotDatasetForOnce(data.Dataset):
 
                 # support set
                 support_indices = random.sample(label_indices, self.num_support)
-                support_set = [np.concatenate((self.iq[i].transpose(), np.flip(self.iq[i].transpose(), axis=1)), axis=0)
+                support_set = [np.concatenate((self.iq[i].transpose()[:, :self.sample_len],
+                                               np.flip(self.iq[i].transpose()[:, :self.sample_len], axis=1)), axis=0)
                                for i in support_indices]
                 sample[label]['support'] = support_set
 

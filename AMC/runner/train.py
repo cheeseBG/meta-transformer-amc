@@ -102,13 +102,14 @@ class Trainer:
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        snr_range = ['-10to20']
+        snr_range = ['-10to20_256']
         for snr in snr_range:
             train_data = FewShotDataset(self.config["dataset_path"],
                                         num_support=self.config["num_support"],
                                         num_query=self.config["num_query"],
                                         robust=True,
-                                        snr_range=[-10, 20], divide=True)
+                                        snr_range=[-10, 20], divide=True,
+                                        sample_len=self.config["train_sample_len"])
 
             train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
             model_name = self.config['fs_model']
