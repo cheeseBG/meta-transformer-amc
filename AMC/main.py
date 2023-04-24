@@ -2,7 +2,6 @@ import logging
 import argparse
 from runner.train import Trainer
 from runner.test import Tester
-from runner.fs_snr_test import SNRTester
 from runner.utils import CustomFormatter
 from datetime import datetime
 
@@ -16,6 +15,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('lr_mode', type=str, default='fs', help='Select learning method: sv(supervised), fs(few-shot)')
+    parser.add_argument('mode', type=str, default='all', help='train: only train, test: only test, all: train+test')
 
     args = parser.parse_args()
 
@@ -33,19 +33,15 @@ if __name__ == '__main__':
 
     # Few shot learning
     elif args.lr_mode == 'fs':
-        logger.info('Start few-shot learning')
-        trainer = Trainer("config.yaml")
-        trainer.fs_train(now)
+        if args.mode in ['train', 'all']:
+            logger.info('Start few-shot learning')
+            trainer = Trainer("config.yaml")
+            trainer.fs_train(now)
 
-        # tester = Tester("config.yaml")
-        # logger.info('Original Test')
-        # tester.fs_test(now)
-        # logger.info('New Metric Test ')
-        # tester.fs_test_once(now)
-
-        # # Plot acc by snr
-        # snr_tester = SNRTester("config.yaml")
-        # snr_tester.snr_test()
+        if args.mode in ['test', 'all']:
+            tester = Tester("config.yaml")
+            logger.info('Size Test')
+            tester.size_test(now)
     else:
         logger.error('Wrong argument!')
 
