@@ -144,13 +144,14 @@ class AMCTestDataset(data.Dataset):
 
 
 class FewShotDataset(data.Dataset):
-    def __init__(self, root_path, num_support, num_query, mode='train', robust=False, snr_range=None):
+    def __init__(self, root_path, num_support, num_query, mode='train', robust=False, snr_range=None, divide=False):
         self.root_path = root_path
         self.robust = robust
         self.snr_range = snr_range
         self.mode = mode
         self.config = get_config('config.yaml')
-
+        self.num_sample = int(4096 * self.config['train_proportion'])  # sample
+        self.divide = divide
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
 
@@ -181,6 +182,26 @@ class FewShotDataset(data.Dataset):
         self.iq = self.iq[mod_mask]
         self.onehot = self.onehot[mod_mask]
         self.snr = self.snr[mod_mask]
+
+        if self.divide is True:
+            # Sampling train data
+            # each modulation-snr has 4096 I/Q samples
+            if mode == 'train':
+                sampling_mask = []
+                for _ in range(self.num_modulation * len(np.unique(self.snr))):
+                    sampling_mask.extend([True for _ in range(self.num_sample)])
+                    sampling_mask.extend([False for _ in range(4096 - self.num_sample)])
+                sampling_mask = np.array(sampling_mask)
+            else:
+                sampling_mask = []
+                for _ in range(self.num_modulation * len(np.unique(self.snr))):
+                    sampling_mask.extend([False for _ in range(4096 - self.num_sample)])
+                    sampling_mask.extend([True for _ in range(self.num_sample)])
+                sampling_mask = np.array(sampling_mask)
+
+            self.iq = self.iq[sampling_mask]
+            self.onehot = self.onehot[sampling_mask]
+            self.snr = self.snr[sampling_mask]
 
         # Extract class labels
         self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]

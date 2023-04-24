@@ -2,6 +2,7 @@ import logging
 import argparse
 from runner.train import Trainer
 from runner.test import Tester
+from runner.fs_snr_test import SNRTester
 from runner.utils import CustomFormatter
 from datetime import datetime
 
@@ -32,15 +33,19 @@ if __name__ == '__main__':
 
     # Few shot learning
     elif args.lr_mode == 'fs':
-        logger.info('Start few-shot learning')
-        trainer = Trainer("config.yaml")
-        trainer.fs_train(now)
+        # logger.info('Start few-shot learning')
+        # trainer = Trainer("config.yaml")
+        # trainer.fs_train(now)
 
-        tester = Tester("config.yaml")
-        logger.info('Original Test')
-        tester.fs_test(now)
-        logger.info('New Metric Test ')
-        tester.fs_test_once(now)
+        # tester = Tester("config.yaml")
+        # logger.info('Original Test')
+        # tester.fs_test(now)
+        # logger.info('New Metric Test ')
+        # tester.fs_test_once(now)
+
+        # Plot acc by snr
+        snr_tester = SNRTester("config.yaml")
+        snr_tester.snr_test()
     else:
         logger.error('Wrong argument!')
 

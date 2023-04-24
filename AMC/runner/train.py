@@ -102,74 +102,54 @@ class Trainer:
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="AMC_few-shot",
-            group=self.config['fs_model'],
-            name=now,
-            notes=f'num_support:{self.config["num_support"]},'
-                  f' num_query:{self.config["num_query"]},'
-                  f' robust:{True},'
-                  f' snr_range:{self.config["snr_range"]},'
-                  f' train_class_indice:{self.config["easy_class_indice"]}',
+        snr_range = ['-10to20']
+        for snr in snr_range:
+            train_data = FewShotDataset(self.config["dataset_path"],
+                                        num_support=self.config["num_support"],
+                                        num_query=self.config["num_query"],
+                                        robust=True,
+                                        snr_range=[-10, 20], divide=True)
 
-            # track hyperparameters and run metadata
-            config={
-                "learning_rate": self.config["lr"],
-                "architecture": self.config['fs_model'],
-                "dataset": "RML2018",
-                "epochs": self.config["epoch"],
-                "lr_gamma": self.config["lr_gamma"]
-            }
-        )
+            train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
+            model_name = self.config['fs_model']
 
-        train_data = FewShotDataset(self.config["dataset_path"],
-                                    num_support=self.config["num_support"],
-                                    num_query=self.config["num_query"],
-                                    robust=True,
-                                    snr_range=self.config["snr_range"])
+            if model_name == 'rewis':
+                model = load_protonet_conv(
+                    x_dim=(1, 512, 256),
+                    hid_dim=32,
+                    z_dim=11,
+                )
+                optimizer = Adam(model.parameters(), lr=0.001)
+                scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
 
-        train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
-        model_name = self.config['fs_model']
+            elif model_name == 'robustcnn':
+                model = load_protonet_robustcnn()
+                optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
+                scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
 
-        if model_name == 'rewis':
-            model = load_protonet_conv(
-                x_dim=(1, 512, 256),
-                hid_dim=32,
-                z_dim=11,
-            )
-            optimizer = Adam(model.parameters(), lr=0.001)
-            scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
+            for epoch in range(self.config["epoch"]):
+                print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+                print('-' * 10)
 
-        elif model_name == 'robustcnn':
-            model = load_protonet_robustcnn()
-            optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
+                # while epoch < max_epoch and not stop:
+                train_loss = 0.0
+                train_acc = 0.0
 
-        for epoch in range(self.config["epoch"]):
-            print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
-            print('-' * 10)
+                for episode, sample in enumerate(tqdm.tqdm(train_dataloader)):
+                    optimizer.zero_grad()
+                    loss, output = model.proto_train(sample)
+                    train_loss += output['loss']
+                    train_acc += output['acc']
+                    loss.backward()
+                    optimizer.step()
 
-            # while epoch < max_epoch and not stop:
-            train_loss = 0.0
-            train_acc = 0.0
+                epoch_loss = train_loss / (episode+1)
+                epoch_acc = train_acc / (episode+1)
+                print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
+                scheduler.step()
 
-            for episode, sample in enumerate(tqdm.tqdm(train_dataloader)):
-                optimizer.zero_grad()
-                loss, output = model.proto_train(sample)
-                train_loss += output['loss']
-                train_acc += output['acc']
-                loss.backward()
-                optimizer.step()
+                save_path =  os.path.join(self.config["save_path"], str(snr))
 
-
-            epoch_loss = train_loss / (episode+1)
-            epoch_acc = train_acc / (episode+1)
-            print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
-            scheduler.step()
-
-            wandb.log({"acc": epoch_acc, "loss": epoch_loss})
-
-            os.makedirs(self.config["save_path"], exist_ok=True)
-            torch.save(model.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
-            print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
+                os.makedirs(save_path, exist_ok=True)
+                torch.save(model.state_dict(), os.path.join(save_path, "{}.tar".format(epoch)))
+                print("saved at {}".format(os.path.join(save_path, "{}.tar".format(epoch))))
