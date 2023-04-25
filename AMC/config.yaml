@@ -1,7 +1,7 @@
 # data parameters
 dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
 snr_range: [0, 0]
-save_path: checkpoint/few_shot
+save_path: checkpoint/snr_test
 epoch: 40
 
 # supervised learning parameters
