@@ -2,3 +2,4 @@ AMC/checkpoint/
 amc_dataset/
 AMC/wandb
 */*/__pycache__/*
+AMC/runner/data/
