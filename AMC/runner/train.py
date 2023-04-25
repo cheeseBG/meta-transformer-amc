@@ -18,6 +18,7 @@ class Trainer:
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
         self.batch_size = self.config["batch_size"]
+        self.snr_range = self.config['snr_range']
         self.model_path = model_path
 
         self.net = model_selection(self.config["model_name"])
@@ -102,13 +103,47 @@ class Trainer:
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        snr_range = ['-10to20']
+        # ################## Wandb setting #############################
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project="AMC_few-shot",
+            # group=self.config['fs_model'],
+            # group="Test Sweep",
+            group="SNR test",
+            name=now,
+            notes=f'num_support:{self.config["num_support"]},'
+                  f'num_query:{self.config["num_query"]},'
+                  f'robust:{True},'
+                  f'snr_range:{self.config["snr_range"]},'
+                  f'train_class_indice:{self.config["easy_class_indice"]},'
+                  f'test_class_indice:{self.config["difficult_class_indice"]}',
+
+            # track hyperparameters and run metadata
+            config={
+                # "learning_rate": self.config["lr"],
+                "architecture": self.config['fs_model'],
+                "dataset": "RML2018",
+                # "epochs": self.config["epoch"],
+
+                # "learning_rate": 0.01,
+                # "momentum": 0.9,
+                # "batch_size": 128,
+                # "epochs": 30,
+                # "scheduler_step_size": 10,
+                # "scheduler_gamma":0.1
+
+            }
+        )
+        w_config = wandb.config
+        # ###############################################################
+
+        snr_range = self.snr_range
         for snr in snr_range:
             train_data = FewShotDataset(self.config["dataset_path"],
                                         num_support=self.config["num_support"],
                                         num_query=self.config["num_query"],
                                         robust=True,
-                                        snr_range=[-10, 20], divide=True)
+                                        snr_range=[snr, snr], divide=True)
 
             train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
             model_name = self.config['fs_model']
@@ -148,7 +183,7 @@ class Trainer:
                 print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
                 scheduler.step()
 
-                save_path =  os.path.join(self.config["save_path"], str(snr))
+                save_path = os.path.join(self.config["save_path"], str(snr))
 
                 os.makedirs(save_path, exist_ok=True)
                 torch.save(model.state_dict(), os.path.join(save_path, "{}.tar".format(epoch)))
