@@ -265,4 +265,3 @@ def load_protonet_vit():
         mlp_dim=config["mlp_dim"],
         in_size=config["in_size"]
     )
-    return ProtoNet(encoder)

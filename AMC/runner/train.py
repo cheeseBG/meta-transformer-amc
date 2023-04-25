@@ -11,7 +11,6 @@ from runner.utils import get_config, model_selection
 from data.dataset import AMCTrainDataset, FewShotDataset
 from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 
-
 class Trainer:
     def __init__(self, config, model_path=None):
         self.config = get_config(config)
@@ -121,6 +120,7 @@ class Trainer:
                 "epochs": self.config["epoch"],
             }
         )
+
         model_name = self.config['fs_model']
         robust = False
         if model_name != 'vit':
@@ -133,7 +133,6 @@ class Trainer:
                                     snr_range=self.config["snr_range"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
-
 
         if model_name == 'rewis':
             model = load_protonet_conv(
