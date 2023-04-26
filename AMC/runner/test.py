@@ -124,6 +124,11 @@ class Tester:
             }
         )
 
+        model_name = self.config['fs_model']
+        robust = False
+        if model_name != 'vit':
+            robust = True
+
         n_way = len(self.config['difficult_class_indice'])
 
         test_data = FewShotDataset(self.config["dataset_path"],
@@ -133,8 +138,6 @@ class Tester:
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
-        model_name = self.config['fs_model']
-
         if model_name == 'rewis':
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
@@ -143,6 +146,8 @@ class Tester:
             )
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
+        elif model_name == 'vit':
+            model = load_protonet_vit()
 
         model.load_state_dict(torch.load(self.model_path))
 
