@@ -3,18 +3,16 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from torchsummary import summary
 
+
 class PatchEmbedding(nn.Module):
-    def __init__(self, in_channels, patch_size, embed_dim):
+    def __init__(self, in_channels, embed_dim, patch_size):
         super().__init__()
-        self.patch_size = patch_size
-        self.projection = nn.Sequential(
-            nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size),
-            nn.Flatten(2),
-        )
+        self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, strid=patch_size)
 
     def forward(self, x):
-        x = self.projection(x)
-        return torch.transpose(x, 1, 2)
+        x = self.proj(x)
+        x = x.flatten(2).transpose(1, 2)
+        return x
 
 
 class MultiHeadAttention(nn.Module):
