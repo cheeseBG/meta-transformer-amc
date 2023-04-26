@@ -6,7 +6,6 @@ import numpy as np
 from runner.utils import euclidean_dist, get_config
 from models.robustcnn import *
 from models.vit import *
-from models.vitg14 import *
 
 
 class ProtoNet(nn.Module):
@@ -257,9 +256,9 @@ def load_protonet_robustcnn():
 def load_protonet_vit():
     config = get_config('config.yaml')
 
-    encoder = ViTG14(
+    encoder = ViT(
         in_channels=config["in_channels"],
-        patch_size=config["patch_size"],
+        patch_size=tuple(config["patch_size"]),
         embed_dim=config["embed_dim"],
         num_layers=config["num_layers"],
         num_heads=config["num_heads"],
