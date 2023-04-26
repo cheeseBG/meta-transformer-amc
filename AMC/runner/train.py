@@ -11,6 +11,7 @@ from runner.utils import get_config, model_selection
 from data.dataset import AMCTrainDataset, FewShotDataset
 from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 
+
 class Trainer:
     def __init__(self, config, model_path=None):
         self.config = get_config(config)

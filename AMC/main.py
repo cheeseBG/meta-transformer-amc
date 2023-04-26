@@ -15,6 +15,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('lr_mode', type=str, default='fs', help='Select learning method: sv(supervised), fs(few-shot)')
+    parser.add_argument('mode', type=str, default='all', help='train: only train, test: only test, all: train+test')
 
     args = parser.parse_args()
 
@@ -32,15 +33,17 @@ if __name__ == '__main__':
 
     # Few shot learning
     elif args.lr_mode == 'fs':
-        # logger.info('Start few-shot learning')
-        # trainer = Trainer("config.yaml")
-        # trainer.fs_train(now)
+        if args.mode in ['train', 'all']:
+            logger.info('Start few-shot learning')
+            trainer = Trainer("config.yaml")
+            trainer.fs_train(now)
 
-        tester = Tester("config.yaml")
-        logger.info('Original Test')
-        tester.fs_test(now)
-        logger.info('New Metric Test ')
-        tester.fs_test_once(now)
+        if args.mode in ['test', 'all']:
+            tester = Tester("config.yaml")
+            logger.info('Original Test')
+            tester.fs_test(now)
+            logger.info('New Metric Test ')
+            tester.fs_test_once(now)
     else:
         logger.error('Wrong argument!')
 

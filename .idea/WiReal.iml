@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-<<<<<<< HEAD
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/AMC/checkpoint" />
       <excludeFolder url="file://$MODULE_DIR$/AMC/wandb" />
       <excludeFolder url="file://$MODULE_DIR$/amc_dataset" />
     </content>
-=======
-    <content url="file://$MODULE_DIR$" />
->>>>>>> 79fd4a426071cf228f565580959f3c5b8beab1dd
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
