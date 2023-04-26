@@ -134,7 +134,8 @@ class Tester:
         test_data = FewShotDataset(self.config["dataset_path"],
                                    num_support=self.config["num_support"],
                                    num_query=self.config["num_query"],
-                                   robust=True, mode='test',
+                                   robust=robust,
+                                   mode='test',
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
