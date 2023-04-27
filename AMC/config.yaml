@@ -30,7 +30,6 @@ num_support: 5
 num_query: 10
 
 # transformer parameters
-
 trans_lr: 0.001
 in_channels: 1
 patch_size: [2, 16]
