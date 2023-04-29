@@ -41,3 +41,15 @@ data_divide: True  # divide train, test dataset
 ### test
 test_snr_range: [-20,20]
 load_model_name: 39.tar
+
+# transformer parameters
+trans_lr: 0.001
+
+in_channels: 1
+patch_size: [2, 5]
+embed_dim: 34
+num_layers: 4
+num_heads: 6
+mlp_dim: 64
+in_size: [2,1024]
+num_classes: 13

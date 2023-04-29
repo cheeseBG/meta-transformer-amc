@@ -42,15 +42,22 @@ class Tester:
         acc_per_size = []
 
         model_name = self.config['fs_model']
+        robust = False
+        if model_name != 'vit':
+            robust = True
 
         if model_name == 'rewis':
-            model = load_protonet_conv(
-                x_dim=(1, 512, 256),
-                hid_dim=32,
-                z_dim=11,
-            )
+                model = load_protonet_conv(
+                    x_dim=(1, 512, 256),
+                    hid_dim=32,
+                    z_dim=11,
+             )
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
+
+        elif model_name == 'vit':
+            model = load_protonet_vit()
+
         m_path = os.path.join(self.model_path, load_folder_name, self.config['load_model_name'])
         model.load_state_dict(torch.load(m_path))
 
@@ -62,7 +69,7 @@ class Tester:
                 test_data = FewShotDataset(self.config["dataset_path"],
                                            num_support=self.config["num_support"],
                                            num_query=self.config["num_query"],
-                                           robust=True, mode='test',
+                                           robust=robust, mode='test',
                                            snr_range=[snr, snr],
                                            divide=self.config['data_divide'],
                                            sample_len=sample_size)

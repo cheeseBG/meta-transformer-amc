@@ -140,16 +140,20 @@ class Trainer:
 
         save_folder_name = self.config['save_folder_name']
 
+        model_name = self.config['fs_model']
+        robust = False
+        if model_name != 'vit':
+            robust = True
+
         train_data = FewShotDataset(self.config["dataset_path"],
                                     num_support=self.config["num_support"],
                                     num_query=self.config["num_query"],
-                                    robust=True,
+                                    robust=robust,
                                     snr_range=self.config['snr_range'],
                                     divide=self.config['data_divide'],  # divide by train proportion
                                     sample_len=self.config["train_sample_size"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
-        model_name = self.config['fs_model']
 
         if model_name == 'rewis':
             model = load_protonet_conv(
@@ -164,6 +168,11 @@ class Trainer:
             model = load_protonet_robustcnn()
             optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
+
+        elif model_name == 'vit':
+            model = load_protonet_vit()
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
         for epoch in range(self.config["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
