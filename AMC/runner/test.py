@@ -6,7 +6,7 @@ import tqdm
 import wandb
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
-from models.proto import load_protonet_conv, load_protonet_robustcnn
+from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 from plot.conf_matrix import plot_confusion_matrix
 import matplotlib.pyplot as plt
 
@@ -89,7 +89,11 @@ class Tester:
                 acc_per_snr.append(avg_acc)
 
             acc_per_size.append(acc_per_snr)
-
+	
+        print(acc_per_size[0])
+        print(acc_per_size[1])
+        print(acc_per_size[2])
+	
         # SNR Graph
         plt.rcParams['font.family'] = 'Arial'
         title_fontsize = 32
