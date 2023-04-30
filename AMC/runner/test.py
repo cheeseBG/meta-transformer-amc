@@ -6,7 +6,7 @@ import tqdm
 import wandb
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
-from models.proto import load_protonet_conv, load_protonet_robustcnn
+from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 from plot.conf_matrix import plot_confusion_matrix
 import matplotlib.pyplot as plt
 
@@ -42,6 +42,9 @@ class Tester:
         acc_per_train = []
         for t_snr in trained_snr_range:
             model_name = self.config['fs_model']
+            robust = False
+            if model_name != 'vit':
+                robust = True
 
             if model_name == 'rewis':
                 model = load_protonet_conv(
@@ -51,6 +54,9 @@ class Tester:
                 )
             elif model_name == 'robustcnn':
                 model = load_protonet_robustcnn()
+            elif model_name == 'vit':
+                model = load_protonet_vit()
+
             m_path = os.path.join(self.model_path, str(t_snr), self.model_num)
             model.load_state_dict(torch.load(m_path))
 
@@ -61,7 +67,7 @@ class Tester:
                 test_data = FewShotDataset(self.config["dataset_path"],
                                            num_support=self.config["num_support"],
                                            num_query=self.config["num_query"],
-                                           robust=True, mode='test',
+                                           robust=robust, mode='test',
                                            snr_range=[snr, snr], divide=True)
                 test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 

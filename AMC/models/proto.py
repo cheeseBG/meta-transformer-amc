@@ -291,3 +291,20 @@ def load_protonet_robustcnn():
     )
 
     return ProtoNet(encoder)
+
+
+def load_protonet_vit():
+    config = get_config('config.yaml')
+
+    encoder = ViT(
+        in_channels=config["in_channels"],
+        patch_size=tuple(config["patch_size"]),
+        embed_dim=config["embed_dim"],
+        num_layers=config["num_layers"],
+        num_heads=config["num_heads"],
+        mlp_dim=config["mlp_dim"],
+        num_classes=config["num_classes"],
+        in_size=config["in_size"]
+
+    )
+    return ProtoNet(encoder)
