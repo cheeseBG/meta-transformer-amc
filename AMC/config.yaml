@@ -34,7 +34,7 @@ trans_lr: 0.001
 
 in_channels: 1
 patch_size: [2, 16]
-embed_dim: 32
+embed_dim: 36
 num_layers: 32
 num_heads: 4
 mlp_dim: 64
