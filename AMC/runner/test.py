@@ -6,7 +6,7 @@ import tqdm
 import wandb
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
-from models.proto import load_protonet_conv, load_protonet_robustcnn
+from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 from plot.conf_matrix import plot_confusion_matrix
 import matplotlib.pyplot as plt
 

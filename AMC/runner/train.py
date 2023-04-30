@@ -9,7 +9,7 @@ from datetime import datetime
 from torch.optim import lr_scheduler, Adam
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTrainDataset, FewShotDataset
-from models.proto import load_protonet_conv, load_protonet_robustcnn
+from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 
 
 class Trainer:
