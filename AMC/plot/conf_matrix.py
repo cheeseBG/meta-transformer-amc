@@ -42,7 +42,7 @@ def plot_confusion_matrix(conf_mat, classes, normalize=True, title=None, cmap=pl
     # Set the title with the specified fontsize.
     ax.set_title(title, fontsize=22)
     ax.set_xlabel('Predicted label', fontsize=xlabel_fontsize)
-    ax.set_ylabel('Predicted label', fontsize=ylabel_fontsize)
+    ax.set_ylabel('True label', fontsize=ylabel_fontsize)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor", fontsize=xticks_fontsize)
     plt.setp(ax.get_yticklabels(), fontsize=yticks_fontsize)
 
