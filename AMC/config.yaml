@@ -1,6 +1,6 @@
 # data parameters
-dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
-save_path: checkpoint/size_test
+dataset_path: /home/inclab2/Gitrepo/WiReal/amc_dataset/RML2018
+save_path: checkpoint/snr_test_vit_easy_1024
 epoch: 40
 
 # supervised learning parameters
@@ -15,8 +15,8 @@ lr_gamma: 0.8
 print_iter: 400
 
 # test parameters
-test_dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
-load_test_path: checkpoint/size_test
+test_dataset_path: /home/inclab2/Gitrepo/WiReal/amc_dataset/RML2018
+load_test_path: checkpoint/snr_test_vit_easy_1024
 show_conf_matrix: True
 
 # AMC dataset configuration
@@ -31,8 +31,8 @@ num_query: 10
 
 ##### SNR test parameters
 ### train
-snr_range: [-10, 0, 4 , 10, 20]
-train_sample_size: 256
+snr_range: [2]
+train_sample_size: 1024
 train_proportion: 0.8
 data_divide: True  # divide train, test dataset
 
@@ -44,10 +44,10 @@ load_model_name: 39.tar
 trans_lr: 0.001
 
 in_channels: 1
-patch_size: [2, 16]
+patch_size: [2, 5]
 embed_dim: 36
-num_layers: 32
-num_heads: 4
+num_layers: 4
+num_heads: 6
 mlp_dim: 64
 in_size: [2,1024]
 num_classes: 13
