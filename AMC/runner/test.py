@@ -6,7 +6,7 @@ import tqdm
 import wandb
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
-from models.proto import load_protonet_conv, load_protonet_robustcnn
+from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 from plot.conf_matrix import plot_confusion_matrix
 import matplotlib.pyplot as plt
 
@@ -118,16 +118,21 @@ class Tester:
         acc_per_size = []
 
         model_name = self.config['fs_model']
+        robust = False
+        if model_name != 'vit':
+            robust = True
 
         if model_name == 'rewis':
-            model = load_protonet_conv(
-                x_dim=(1, 512, 256),
-                hid_dim=32,
-                z_dim=11,
-            )
+                model = load_protonet_conv(
+                    x_dim=(1, 512, 256),
+                    hid_dim=32,
+                    z_dim=11,
+             )
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
 
+        elif model_name == 'vit':
+            model = load_protonet_vit()
 
         m_path = os.path.join(self.model_path, load_folder_name, self.config['load_model_name'])
         model.load_state_dict(torch.load(m_path))
@@ -166,7 +171,11 @@ class Tester:
                 acc_per_snr.append(avg_acc)
 
             acc_per_size.append(acc_per_snr)
-
+	
+        print(acc_per_size[0])
+        print(acc_per_size[1])
+        print(acc_per_size[2])
+	
         # SNR Graph
         plt.rcParams['font.family'] = 'Arial'
         title_fontsize = 32
