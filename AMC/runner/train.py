@@ -41,10 +41,15 @@ class Trainer:
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
+        model_name = self.config['model_name']
+        robust = False
+        if model_name == 'robustcnn':
+            robust = True
+
         if not os.path.exists(self.config["save_path"]):
             os.mkdir(self.config["save_path"])
 
-        train_data = AMCTrainDataset(self.config["dataset_path"], robust=True, mode='easy', snr_range=self.config["snr_range"])
+        train_data = AMCTrainDataset(self.config["dataset_path"], robust=robust, snr_range=self.config["snr_range"])
         train_dataset_size = len(train_data)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 

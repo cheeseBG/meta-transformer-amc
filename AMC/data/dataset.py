@@ -13,11 +13,10 @@ random.seed(50)
 
 
 class AMCTrainDataset(data.Dataset):
-    def __init__(self, root_path, mode=None, robust=False, snr_range=None):
+    def __init__(self, root_path, robust=False, snr_range=None):
         super(AMCTrainDataset, self).__init__()
 
         self.root_path = root_path
-        self.mode = mode
         self.snr_range = snr_range
         self.transforms = AMCTransform()
         self.robust = robust
@@ -39,13 +38,13 @@ class AMCTrainDataset(data.Dataset):
             self.onehot = self.onehot[snr_mask]
             self.snr = self.snr[snr_mask]
 
-        # Sampling data which are easy modulation
-        if self.mode == 'easy':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in range(len(self.onehot))])
-            self.iq = self.iq[mod_mask]
-            self.onehot = self.onehot[mod_mask]
-            self.snr = self.snr[mod_mask]
-            self.num_modulation = len(self.config['easy_class_indice'])
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
+                             range(len(self.onehot))])
+        self.num_modulation = len(self.config['easy_class_indice'])
+
+        self.iq = self.iq[mod_mask]
+        self.onehot = self.onehot[mod_mask]
+        self.snr = self.snr[mod_mask]
 
         # Sampling train data
         # each modulation-snr has 4096 I/Q samples
@@ -104,14 +103,13 @@ class AMCTestDataset(data.Dataset):
             self.onehot = self.onehot[snr_mask]
             self.snr = self.snr[snr_mask]
 
-        # Sampling data which are easy modulation
-        if self.mode == 'easy':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
-                                 range(len(self.onehot))])
-            self.iq = self.iq[mod_mask]
-            self.onehot = self.onehot[mod_mask]
-            self.snr = self.snr[mod_mask]
-            self.num_modulation = len(self.config['easy_class_indice'])
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in
+                             range(len(self.onehot))])
+        self.num_modulation = len(self.config['difficult_class_indice'])
+
+        self.iq = self.iq[mod_mask]
+        self.onehot = self.onehot[mod_mask]
+        self.snr = self.snr[mod_mask]
 
         # Sampling train data
         # each modulation-snr has 4096 I/Q samples

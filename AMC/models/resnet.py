@@ -36,8 +36,10 @@ class ResidualBlock(nn.Module):
 
 
 class ResNetStack(nn.Module):
-    def __init__(self, in_channels, n_class):
+    def __init__(self, in_channels, n_class, softmax=True):
         super(ResNetStack, self).__init__()
+
+        self.softmax = softmax
 
         self.reshape = nn.Sequential(
             nn.Conv2d(in_channels, 1, kernel_size=1, stride=1, padding=0),
@@ -63,12 +65,14 @@ class ResNetStack(nn.Module):
             nn.SELU(),
             nn.AlphaDropout(0.3),
             nn.Linear(128, n_class),
-            nn.Softmax(dim=1)
         )
 
     def forward(self, x):
         x = self.reshape(x)
         x = self.residual_blocks(x)
         x = self.fc_layers(x)
+
+        if self.softmax:
+            x = F.softmax(x, dim=1)
 
         return x
