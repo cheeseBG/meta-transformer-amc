@@ -139,7 +139,7 @@ class Tester:
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
-        if model_name == 'rewis':
+        if model_name == 'protonet':
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,
@@ -212,7 +212,7 @@ class Tester:
                                    snr_range=self.config["snr_range"])
         test_dataloader = DATA.DataLoader(test_data, batch_size=1, shuffle=True)
 
-        if model_name == 'rewis':
+        if model_name == 'protonet':
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,

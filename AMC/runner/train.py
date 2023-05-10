@@ -23,8 +23,10 @@ class Trainer:
         self.net = model_selection(self.config["model_name"])
 
         # optimizer
-        self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
-
+        if self.config["model_name"] == 'robustcnn':
+            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
+        elif self.config["model_name"] == 'resnet':
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
         # loss
         self.loss = nn.CrossEntropyLoss()
 
@@ -135,7 +137,7 @@ class Trainer:
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
-        if model_name == 'rewis':
+        if model_name == 'protonet':
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,
