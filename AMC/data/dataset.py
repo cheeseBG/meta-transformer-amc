@@ -13,11 +13,10 @@ random.seed(50)
 
 
 class AMCTrainDataset(data.Dataset):
-    def __init__(self, root_path, mode=None, robust=False, snr_range=None):
+    def __init__(self, root_path, robust=False, sample_len=1024, snr_range=None):
         super(AMCTrainDataset, self).__init__()
 
         self.root_path = root_path
-        self.mode = mode
         self.snr_range = snr_range
         self.transforms = AMCTransform()
         self.robust = robust
@@ -31,6 +30,7 @@ class AMCTrainDataset(data.Dataset):
         self.snr = np.squeeze(self.data['Z'])
         self.num_modulation = 24
         self.num_sample = int(4096 * self.config['train_proportion'])  # sample per modulation-snr
+        self.sample_len = sample_len
 
         # Sampling data in snr boundary
         if self.snr_range is not None:
@@ -40,12 +40,13 @@ class AMCTrainDataset(data.Dataset):
             self.snr = self.snr[snr_mask]
 
         # Sampling data which are easy modulation
-        if self.mode == 'easy':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in range(len(self.onehot))])
-            self.iq = self.iq[mod_mask]
-            self.onehot = self.onehot[mod_mask]
-            self.snr = self.snr[mod_mask]
-            self.num_modulation = len(self.config['easy_class_indice'])
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
+                             range(len(self.onehot))])
+        self.num_modulation = len(self.config['easy_class_indice'])
+
+        self.iq = self.iq[mod_mask]
+        self.onehot = self.onehot[mod_mask]
+        self.snr = self.snr[mod_mask]
 
         # Sampling train data
         # each modulation-snr has 4096 I/Q samples
@@ -64,7 +65,7 @@ class AMCTrainDataset(data.Dataset):
 
     def __getitem__(self, item):
         label = int(argwhere(self.onehot[item] == 1))
-        x = self.iq[item].transpose()
+        x = self.iq[item].transpose()[:, :self.sample_len]
 
         if self.robust is True:
             revers = np.flip(x.copy(), axis=1)
@@ -78,11 +79,10 @@ class AMCTrainDataset(data.Dataset):
 
 
 class AMCTestDataset(data.Dataset):
-    def __init__(self, root_path, mode=None, robust=False, snr_range=None):
+    def __init__(self, root_path, robust=False, snr_range=None, sample_len=1024):
         super(AMCTestDataset, self).__init__()
 
         self.root_path = root_path
-        self.mode = mode
         self.snr_range = snr_range
         self.transforms = AMCTransform()
         self.robust = robust
@@ -96,6 +96,7 @@ class AMCTestDataset(data.Dataset):
         self.snr = np.squeeze(self.data['Z'])
         self.num_modulation = 24
         self.num_sample = 4096 - int(4096 * self.config['train_proportion'])  # sample per modulation-snr
+        self.sample_len = sample_len
 
         # Sampling data in snr boundary
         if self.snr_range is not None:
@@ -104,16 +105,15 @@ class AMCTestDataset(data.Dataset):
             self.onehot = self.onehot[snr_mask]
             self.snr = self.snr[snr_mask]
 
-        # Sampling data which are easy modulation
-        if self.mode == 'easy':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
-                                 range(len(self.onehot))])
-            self.iq = self.iq[mod_mask]
-            self.onehot = self.onehot[mod_mask]
-            self.snr = self.snr[mod_mask]
-            self.num_modulation = len(self.config['easy_class_indice'])
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in
+                             range(len(self.onehot))])
+        self.num_modulation = len(self.config['difficult_class_indice'])
 
-        # Sampling train data
+        self.iq = self.iq[mod_mask]
+        self.onehot = self.onehot[mod_mask]
+        self.snr = self.snr[mod_mask]
+
+        # Sampling test data
         # each modulation-snr has 4096 I/Q samples
         sampling_mask = []
         for _ in range(self.num_modulation * len(np.unique(self.snr))):
@@ -130,7 +130,7 @@ class AMCTestDataset(data.Dataset):
 
     def __getitem__(self, item):
         label = int(argwhere(self.onehot[item] == 1))
-        x = self.iq[item].transpose()
+        x = self.iq[item].transpose()[:, :self.sample_len]
 
         if self.robust is True:
             revers = np.flip(x.copy(), axis=1)

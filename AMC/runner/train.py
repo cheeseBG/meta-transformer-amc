@@ -23,7 +23,10 @@ class Trainer:
         self.net = model_selection(self.config["model_name"])
 
         # optimizer
-        self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
+        if self.config["model_name"] == 'robustcnn':
+            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
+        elif self.config["model_name"] == 'resnet':
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
 
         # loss
         self.loss = nn.CrossEntropyLoss()
@@ -42,7 +45,15 @@ class Trainer:
         if not os.path.exists(self.config["save_path"]):
             os.mkdir(self.config["save_path"])
 
-        train_data = AMCTrainDataset(self.config["dataset_path"], robust=True, mode='easy', snr_range=self.config["snr_range"])
+        model_name = self.config['fs_model']
+        robust = False
+        if model_name == 'robustcnn':
+            robust = True
+
+        train_data = AMCTrainDataset(self.config["dataset_path"],
+                                     robust=robust,
+                                     sample_len=self.config["train_sample_size"],
+                                     snr_range=self.config["snr_range"])
         train_dataset_size = len(train_data)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
@@ -138,12 +149,17 @@ class Trainer:
         w_config = wandb.config
         # ###############################################################
 
+        model_name = self.config['fs_model']
+        robust = False
+        if model_name == 'robustcnn':
+            robust = True
+
         save_folder_name = self.config['save_folder_name']
 
         train_data = FewShotDataset(self.config["dataset_path"],
                                     num_support=self.config["num_support"],
                                     num_query=self.config["num_query"],
-                                    robust=True,
+                                    robust=robust,
                                     snr_range=self.config['snr_range'],
                                     divide=self.config['data_divide'],  # divide by train proportion
                                     sample_len=self.config["train_sample_size"])

@@ -2,6 +2,7 @@ import yaml
 import torch
 import logging
 from models.robustcnn import RobustCNN
+from models.resnet import ResNetStack
 
 
 # get configs
@@ -14,6 +15,8 @@ def get_config(config):
 def model_selection(model_name):
     if model_name == 'robustcnn':
         return RobustCNN(n_class=24, softmax=False)
+    elif model_name == 'resnet':
+        return ResNetStack(1, n_class=24, softmax=False)
     else:
         raise NotImplementedError(model_name)
 
