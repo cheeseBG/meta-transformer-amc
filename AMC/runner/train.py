@@ -7,7 +7,7 @@ import tqdm
 import wandb
 from datetime import datetime
 from torch.optim import lr_scheduler, Adam
-from runner.utils import get_config, model_selection
+from runner.utils import get_config, model_selection, torch_seed
 from data.dataset import AMCTrainDataset, FewShotDataset
 from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 
@@ -136,6 +136,9 @@ class Trainer:
                                     snr_range=self.config["snr_range"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
+
+        # fix torch seed
+        torch_seed(0)
 
         if model_name == 'protonet':
             model = load_protonet_conv(
