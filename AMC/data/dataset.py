@@ -77,11 +77,10 @@ class AMCTrainDataset(data.Dataset):
 
 
 class AMCTestDataset(data.Dataset):
-    def __init__(self, root_path, mode=None, robust=False, snr_range=None):
+    def __init__(self, root_path, robust=False, snr_range=None):
         super(AMCTestDataset, self).__init__()
 
         self.root_path = root_path
-        self.mode = mode
         self.snr_range = snr_range
         self.transforms = AMCTransform()
         self.robust = robust

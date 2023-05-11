@@ -42,6 +42,8 @@ class Trainer:
         print("Device id: ", self.device_ids[0])
 
         model_name = self.config['model_name']
+        print(f'Model Name: {model_name}')
+
         robust = False
         if model_name == 'robustcnn':
             robust = True
