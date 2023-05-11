@@ -1,10 +1,10 @@
 # data parameters
-dataset_path: /home/inclab2/Gitrepo/WiReal/amc_dataset/RML2018
-save_path: checkpoint/size_test
-epoch: 40
+dataset_path: ../amc_dataset/RML2018
+save_path: checkpoint/paper/size/resnet
+epoch: 50
 
 # supervised learning parameters
-model_name: robustcnn
+model_name: resnet
 batch_size: 128
 
 # training parameters
@@ -15,9 +15,9 @@ lr_gamma: 0.8
 print_iter: 400
 
 # test parameters
-test_dataset_path: /home/inclab2/Gitrepo/WiReal/amc_dataset/RML2018
-load_test_path: checkpoint/size_test
-show_conf_matrix: True
+test_dataset_path: ../amc_dataset/RML2018
+load_test_path: checkpoint/paper/size/resnet/49.tar
+show_conf_matrix: False
 
 # AMC dataset configuration
 total_class: ['OOK', '4ASK', '8ASK', 'BPSK', 'QPSK', '8PSK', '16PSK', '32PSK', '16APSK', '32APSK', '64APSK', '128APSK', '16QAM', '32QAM', '64QAM', '128QAM', '256QAM', 'AM-SSB-WC', 'AM-SSB-SC', 'AM-DSB-WC', 'AM-DSB-SC', 'FM', 'GMSK', 'OQPSK']
@@ -31,16 +31,16 @@ num_query: 10
 
 ##### Size test parameters
 ### train
-snr_range: [-10, 20]
-train_sample_size: 256
-test_sample_size: [64, 128, 256, 512, 1024]
-save_folder_name: -10to20_256_all
+snr_range: [10, 30]
+train_sample_size: 1024
+test_sample_size: [256, 512, 1024]
+save_folder_name: -10to20_1024_all
 train_proportion: 0.8
 data_divide: True  # divide train, test dataset
 
 ### test
 test_snr_range: [-20,20]
-load_model_name: 39.tar
+load_model_name: 49.tar
 
 # transformer parameters
 trans_lr: 0.001

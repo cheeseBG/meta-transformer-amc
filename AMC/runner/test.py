@@ -9,6 +9,8 @@ from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
 from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
 from plot.conf_matrix import plot_confusion_matrix
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 
 class Tester:
@@ -41,7 +43,7 @@ class Tester:
 
         self.net.load_state_dict(torch.load(self.model_path))
 
-        model_name = self.config['fs_model']
+        model_name = self.config['model_name']
         robust = False
         if model_name == 'robustcnn':
             robust = True
@@ -78,20 +80,24 @@ class Tester:
                         total += labels.size(0)
                         correct += (pred == labels).sum().item()
 
-                acc = total / correct
+                acc = correct / total
                 acc_per_snr.append(acc)
 
             acc_per_size.append(acc_per_snr)
 
-            # SNR Graph
+        # Save result
+        self.save_result(acc_per_size, sample_size_list, self.config["save_path"])
+
+        # SNR Graph
         plt.rcParams['font.family'] = 'Arial'
         title_fontsize = 32
         xlabel_fontsize = 30
         ylabel_fontsize = 30
         xticks_fontsize = 28
         yticks_fontsize = 28
+        legend_fontsize = 20
 
-        markers = ['*', '>', 'x', '.', '^', '<']
+        markers = ['*', '>', 'x', '.', '^', '<', 'v']
 
         for i, sample_size in enumerate(sample_size_list):
             plt.plot(snr_range, acc_per_size[i], label=f'sample_size{str(sample_size)}', marker=markers[i],
@@ -102,7 +108,7 @@ class Tester:
         plt.title("Classification Accuracy on RadioML 2018.01 Alpha", fontsize=title_fontsize)
         plt.xticks(fontsize=xticks_fontsize)
         plt.yticks(fontsize=yticks_fontsize)
-        plt.legend(loc='lower right', framealpha=1, fontsize=xlabel_fontsize)
+        plt.legend(loc='lower right', framealpha=1, fontsize=legend_fontsize)
         plt.show()
 
     def size_test(self, now):
@@ -171,11 +177,14 @@ class Tester:
                 acc_per_snr.append(avg_acc)
 
             acc_per_size.append(acc_per_snr)
-	
+
+        # Save result
+        self.save_result(acc_per_size, sample_size_list, self.config["save_path"])
+
         print(acc_per_size[0])
         print(acc_per_size[1])
         print(acc_per_size[2])
-	
+
         # SNR Graph
         plt.rcParams['font.family'] = 'Arial'
         title_fontsize = 32
@@ -183,6 +192,7 @@ class Tester:
         ylabel_fontsize = 30
         xticks_fontsize = 28
         yticks_fontsize = 28
+        legend_fontsize = 20
 
         markers = ['*', '>', 'x', '.', '^', '<']
 
@@ -195,5 +205,14 @@ class Tester:
         plt.title("Classification Accuracy on RadioML 2018.01 Alpha", fontsize=title_fontsize)
         plt.xticks(fontsize=xticks_fontsize)
         plt.yticks(fontsize=yticks_fontsize)
-        plt.legend(loc='lower right', framealpha=1, fontsize=xlabel_fontsize)
+        plt.legend(loc='lower right', framealpha=1, fontsize=legend_fontsize)
         plt.show()
+
+
+    def save_result(self, result_list, size_list, save_path):
+        tmp_dict = dict()
+        for i, size in enumerate(size_list):
+            tmp_dict[size] = result_list[i]
+        df = pd.DataFrame(tmp_dict)
+        df.to_csv(os.path.join(save_path, 'result.csv'), index=False)
+

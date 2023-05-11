@@ -13,7 +13,7 @@ random.seed(50)
 
 
 class AMCTrainDataset(data.Dataset):
-    def __init__(self, root_path, robust=False, sample_len=1024, snr_range=None):
+    def __init__(self, root_path, robust=False, snr_range=None, sample_len=1024):
         super(AMCTrainDataset, self).__init__()
 
         self.root_path = root_path
@@ -73,6 +73,7 @@ class AMCTrainDataset(data.Dataset):
 
             sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
         else:
+            #x = np.expand_dims(x, axis=0)
             sample = {"data": x, "label": label, "snr": self.snr[item]}
 
         return sample
@@ -138,6 +139,7 @@ class AMCTestDataset(data.Dataset):
 
             sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
         else:
+            #x = np.expand_dims(x, axis=0)
             sample = {"data": x, "label": label, "snr": self.snr[item]}
 
         return sample

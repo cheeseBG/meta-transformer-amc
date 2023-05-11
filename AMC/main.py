@@ -24,12 +24,14 @@ if __name__ == '__main__':
 
     # Supervised learning
     if args.lr_mode == 'sv':
-        logger.info('Start supervised learning')
-        trainer = Trainer("config.yaml")
-        trainer.train()
+        if args.mode in ['train', 'all']:
+            logger.info('Start supervised learning')
+            trainer = Trainer("config.yaml")
+            trainer.train()
 
-        tester = Tester("config.yaml", per_snr=True)
-        tester.test()
+        if args.mode in ['test', 'all']:
+            tester = Tester("config.yaml", per_snr=True)
+            tester.test()
 
     # Few shot learning
     elif args.lr_mode == 'fs':

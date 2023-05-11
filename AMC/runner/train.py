@@ -26,7 +26,7 @@ class Trainer:
         if self.config["model_name"] == 'robustcnn':
             self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
         elif self.config["model_name"] == 'resnet':
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
 
         # loss
         self.loss = nn.CrossEntropyLoss()
@@ -42,18 +42,15 @@ class Trainer:
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        if not os.path.exists(self.config["save_path"]):
-            os.mkdir(self.config["save_path"])
-
-        model_name = self.config['fs_model']
+        model_name = self.config['model_name']
         robust = False
         if model_name == 'robustcnn':
             robust = True
 
         train_data = AMCTrainDataset(self.config["dataset_path"],
                                      robust=robust,
-                                     sample_len=self.config["train_sample_size"],
-                                     snr_range=self.config["snr_range"])
+                                     snr_range=self.config["snr_range"],
+                                     sample_len=self.config["train_sample_size"])
         train_dataset_size = len(train_data)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
