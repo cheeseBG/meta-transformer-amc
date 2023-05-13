@@ -73,7 +73,7 @@ class AMCTrainDataset(data.Dataset):
 
             sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
         else:
-            #x = np.expand_dims(x, axis=0)
+            x = np.expand_dims(x, axis=0)
             sample = {"data": x, "label": label, "snr": self.snr[item]}
 
         return sample
@@ -139,7 +139,7 @@ class AMCTestDataset(data.Dataset):
 
             sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
         else:
-            #x = np.expand_dims(x, axis=0)
+            x = np.expand_dims(x, axis=0)
             sample = {"data": x, "label": label, "snr": self.snr[item]}
 
         return sample
