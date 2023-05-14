@@ -6,13 +6,13 @@ epoch: 50
 
 # supervised learning parameters
 model_name: resnet
-batch_size: 128
+batch_size: 1024 #128
 
 # training parameters
 cuda: True
 gpu_ids: [0]  # set the GPU ids to use, e.g. [0] or [1, 2]
 train_proportion: 0.8
-lr: 0.01
+lr: 0.001 #  resnet: 0.001 / robustcnn: 0.01
 print_iter: 400
 
 # test parameters
