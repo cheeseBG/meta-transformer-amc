@@ -44,6 +44,7 @@ class ResNetStack(nn.Module):
         self.drop = nn.AlphaDropout(0.3)
 
     def forward(self, x):
+        print(x.shape)
         x = self.conv1(x)
         x = self.res_unit1(x)
         x = self.res_unit2(x)
