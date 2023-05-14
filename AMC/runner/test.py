@@ -194,7 +194,7 @@ class Tester:
         yticks_fontsize = 28
         legend_fontsize = 20
 
-        markers = ['*', '>', 'x', '.', '^', '<']
+        markers = ['*', '>', 'x', '.', '^', '<', 'v']
 
         for i, sample_size in enumerate(sample_size_list):
             plt.plot(snr_range, acc_per_size[i], label=f'sample_size{str(sample_size)}', marker=markers[i],
