@@ -8,13 +8,19 @@ class ResidualUnit(nn.Module):
         super(ResidualUnit, self).__init__()
         # 1*1 Conv
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(1, 1))
-        # Residual Unit 1
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
         self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
         self.conv4 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
         self.conv5 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
         self.relu = nn.ReLU()
         self.max_pool = max_pool
+
+        # Glorot Uniform Initialization (also known as Xavier Uniform)
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
 
     def forward(self, x):
         x = self.conv1(x)
