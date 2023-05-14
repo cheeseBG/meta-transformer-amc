@@ -1,3 +1,8 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
 class ResidualUnit(nn.Module):
     def __init__(self, in_channels, max_pool=False):
         super(ResidualUnit, self).__init__()
