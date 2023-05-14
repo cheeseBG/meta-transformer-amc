@@ -26,7 +26,7 @@ class Trainer:
         if self.config["model_name"] == 'robustcnn':
             self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
         elif self.config["model_name"] == 'resnet':
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
         # loss
         self.loss = nn.CrossEntropyLoss()
 
