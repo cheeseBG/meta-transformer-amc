@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchsummary import summary
+from thop import profile
+import time
 
 
 class ResidualUnit(nn.Module):
@@ -70,3 +73,25 @@ class ResNetStack(nn.Module):
 
         return x
 
+
+if __name__ == '__main__':
+    model = ResNetStack().to("cuda")
+    print(summary(model, (2, 1, 1024)))
+
+    input = torch.randn(1, 2, 1, 1024).cuda()
+
+    start_time = time.time()
+    outputs = model(input)
+    end_time = time.time()
+
+    elapsed_time = end_time - start_time
+    print(
+        "Elapsed time: %.3f" % (elapsed_time)
+    )
+
+    input = torch.randn(1, 2, 1, 1024)
+
+    macs, params = profile(model, inputs=(torch.Tensor(input).to(device="cuda"),))
+    print(
+        "Param: %.2fM | FLOPs: %.3fG" % (params / (1000 ** 2), macs / (1000 ** 3))
+    )

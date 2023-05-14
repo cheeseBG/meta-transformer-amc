@@ -148,7 +148,7 @@ class Trainer:
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,
-                z_dim=11,
+                z_dim=24,
             )
             optimizer = Adam(model.parameters(), lr=0.001)
             scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
