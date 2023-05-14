@@ -1,11 +1,11 @@
 # data parameters
-dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
-snr_range: [-20, 20]
-save_path: checkpoint/paper/size/resnet
+dataset_path: ..\amc_dataset\RML2018
+snr_range: [10, 30]
+save_path: checkpoint/paper/learning/resnet
 epoch: 50
 
 # supervised learning parameters
-model_name: robustcnn
+model_name: resnet
 batch_size: 128
 
 # training parameters
@@ -16,8 +16,8 @@ lr: 0.01
 print_iter: 400
 
 # test parameters
-test_dataset_path: C:\Users\user\Documents\GitHub\WiReal\amc_dataset\RML2018
-load_test_path: checkpoint/paper/size/resnet/49.tar
+test_dataset_path: ..\amc_dataset\RML2018
+load_test_path: checkpoint/paper/size/learning/49.tar
 
 # AMC dataset configuration
 total_class: ['OOK', '4ASK', '8ASK', 'BPSK', 'QPSK', '8PSK', '16PSK', '32PSK', '16APSK', '32APSK', '64APSK', '128APSK', '16QAM', '32QAM', '64QAM', '128QAM', '256QAM', 'AM-SSB-WC', 'AM-SSB-SC', 'AM-DSB-WC', 'AM-DSB-SC', 'FM', 'GMSK', 'OQPSK']
