@@ -4,17 +4,17 @@ import torch.nn.functional as F
 
 
 class ResidualUnit(nn.Module):
-    def __init__(self, in_channels, max_pool=False):
+    def __init__(self, in_channels, out_channels, max_pool=False):
         super(ResidualUnit, self).__init__()
         # 1*1 Conv
-        self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=(1, 1))
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(1, 1))
         # Residual Unit 1
-        self.conv2 = nn.Conv2d(in_channels, in_channels, kernel_size=(2, 3), padding=1)
-        self.conv3 = nn.Conv2d(in_channels, in_channels, kernel_size=(2, 3), padding=1)
-        self.conv4 = nn.Conv2d(in_channels, in_channels, kernel_size=(2, 3), padding=1)
-        self.conv5 = nn.Conv2d(in_channels, in_channels, kernel_size=(2, 3), padding=1)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
+        self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
+        self.conv4 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
+        self.conv5 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 3), padding=(0,1))
         self.relu = nn.ReLU()
-        self.max_pool = nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))
+        self.max_pool = max_pool
 
     def forward(self, x):
         x = self.conv1(x)
@@ -28,13 +28,13 @@ class ResidualUnit(nn.Module):
 
         # Residual unit 2
         identity = out
-        out = self.relu(self.conv4(x))
+        out = self.relu(self.conv4(out))
         out = self.conv5(out)
         out += identity
         out = self.relu(out)
 
         if self.max_pool:
-            out = self.max_pool(out)
+            out = nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))(out)
 
         return out
 
@@ -42,9 +42,8 @@ class ResidualUnit(nn.Module):
 class ResNetStack(nn.Module):
     def __init__(self):
         super(ResNetStack, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=(1, 1))
-        self.res_unit1 = ResidualUnit(32, False)
-        self.res_units = nn.ModuleList([ResidualUnit(32, True) for _ in range(5)])
+        self.res_unit1 = ResidualUnit(2, 32, True)
+        self.res_units = nn.ModuleList([ResidualUnit(32, 32, True) for _ in range(5)])
         self.max_pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(1, 2))
         self.fc1 = nn.Linear(512, 128)
         self.fc2 = nn.Linear(128, 128)
@@ -53,11 +52,9 @@ class ResNetStack(nn.Module):
 
     def forward(self, x):
         x = self.res_unit1(x)
-        x = self.max_pool(x)
-
+        #x = self.max_pool(x)
         for res_unit in self.res_units:
             x = res_unit(x)
-
         x = torch.flatten(x, 1)
         x = F.selu(self.fc1(x))
         x = self.drop(x)
