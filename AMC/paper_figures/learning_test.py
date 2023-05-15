@@ -29,4 +29,6 @@ plt.ylabel("Classification Accuracy", fontsize=ylabel_fontsize)
 plt.xticks(fontsize=xticks_fontsize)
 plt.yticks(fontsize=yticks_fontsize)
 plt.legend(loc='lower right', framealpha=1, fontsize=legend_fontsize)
+
+plt.grid()
 plt.show()
