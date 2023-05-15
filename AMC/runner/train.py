@@ -31,7 +31,7 @@ class Trainer:
         self.loss = nn.CrossEntropyLoss()
 
         # scheduler
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.1)
+        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.9)
 
         if self.use_cuda:
             self.net.to(self.device_ids[0])
