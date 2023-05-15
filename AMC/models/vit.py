@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from torchsummary import summary
+from thop import profile
+import time
 
 
 class PatchEmbedding(nn.Module):
@@ -97,3 +99,35 @@ class ViT(nn.Module):
         x = self.fc(x)
 
         return x
+
+
+if __name__ == '__main__':
+    model = ViT(
+        in_channels=1,
+        patch_size=(2, 16),
+        embed_dim=36,
+        num_layers=8,
+        num_heads=9,
+        mlp_dim=32,
+        num_classes=24,
+        in_size=[2, 1024]
+    ).to("cuda")
+    print(summary(model, (1, 2, 1024)))
+
+    input = torch.randn(1, 1, 2, 1024).cuda()
+
+    start_time = time.time()
+    outputs = model(input)
+    end_time = time.time()
+
+    elapsed_time = end_time - start_time
+    print(
+        "Elapsed time: %.3f" % (elapsed_time)
+    )
+
+    input = torch.randn(1, 1, 2, 1024)
+
+    macs, params = profile(model, inputs=(torch.Tensor(input).to(device="cuda"),))
+    print(
+        "Param: %.2fM | FLOPs: %.3fG" % (params / (1000 ** 2), macs / (1000 ** 3))
+    )

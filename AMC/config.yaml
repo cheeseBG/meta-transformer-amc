@@ -33,11 +33,10 @@ num_query: 10
 trans_lr: 0.001
 
 in_channels: 1
-patch_size: [2, 5]
+patch_size: [2, 16] #12
 embed_dim: 36
 num_layers: 8
-num_heads: 4
+num_heads: 9
 mlp_dim: 32
 in_size: [2,1024]
-num_classes: 13
-
+num_classes: 24
