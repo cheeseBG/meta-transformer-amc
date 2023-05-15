@@ -71,13 +71,13 @@ class Tester:
             f.close()
 
         else:
-            correct = 0
-            total = 0
             snr_range = range(self.config["snr_range"][0], self.config["snr_range"][1] + 1, 2)
 
             f = open(os.path.join(os.path.dirname(self.model_path), "acc.txt"), "w")
 
             for snr in snr_range:
+                correct = 0
+                total = 0
                 test_data = AMCTestDataset(self.config["test_dataset_path"], robust=robust, snr_range=(snr, snr))
                 test_dataloader = DATA.DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
 
