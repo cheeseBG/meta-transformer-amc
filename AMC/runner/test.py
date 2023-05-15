@@ -132,7 +132,7 @@ class Tester:
                 model = load_protonet_conv(
                     x_dim=(1, 512, 256),
                     hid_dim=32,
-                    z_dim=11,
+                    z_dim=24,
              )
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
@@ -181,9 +181,6 @@ class Tester:
         # Save result
         self.save_result(acc_per_size, sample_size_list, self.config["save_path"])
 
-        print(acc_per_size[0])
-        print(acc_per_size[1])
-        print(acc_per_size[2])
 
         # SNR Graph
         plt.rcParams['font.family'] = 'Arial'
