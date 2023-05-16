@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
 
@@ -8,17 +9,10 @@ plt.rcParams['font.family'] = 'Arial'
 
 
 def plot_confusion_matrix(conf_mat, classes, normalize=True, title=None, cmap=plt.cm.Blues):
-    title_fontsize = 22
-    xlabel_fontsize = 20
-    ylabel_fontsize = 20
-    xticks_fontsize = 18
-    yticks_fontsize = 18
-
-    if not title:
-        if normalize:
-            title = 'Normalized Confusion Matrix'
-        else:
-            title = 'Confusion Matrix, without Normalization'
+    xlabel_fontsize = 32
+    ylabel_fontsize = 32
+    xticks_fontsize = 26
+    yticks_fontsize = 26
 
     cm = np.array(conf_mat)
 
@@ -28,10 +22,11 @@ def plot_confusion_matrix(conf_mat, classes, normalize=True, title=None, cmap=pl
     else:
         print("Confusion Matrix, without Normalization")
 
-
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(15, 15))
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
-    ax.figure.colorbar(im, ax=ax)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    ax.figure.colorbar(im, ax=ax, cax=cax)
 
     # Show all ticks and label them with their respective list entries.
     ax.set(xticks=np.arange(cm.shape[1]),
@@ -40,7 +35,6 @@ def plot_confusion_matrix(conf_mat, classes, normalize=True, title=None, cmap=pl
            ylabel='True label',)
 
     # Set the title with the specified fontsize.
-    ax.set_title(title, fontsize=22)
     ax.set_xlabel('Predicted label', fontsize=xlabel_fontsize)
     ax.set_ylabel('True label', fontsize=ylabel_fontsize)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor", fontsize=xticks_fontsize)
@@ -56,4 +50,4 @@ def plot_confusion_matrix(conf_mat, classes, normalize=True, title=None, cmap=pl
                     color="white" if cm[i, j] > thresh else "black")
 
     fig.tight_layout()
-    plt.show()
+    plt.savefig('paper_figures/figures/best_conf_resnet.png', bbox_inches='tight')

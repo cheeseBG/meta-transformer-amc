@@ -167,6 +167,7 @@ class Tester:
                 output = model.proto_test(sample)
 
                 a = output['y_hat'].cpu().int()
+
                 for cls in range(n_way):
                     conf_mat[cls, :] = conf_mat[cls, :] + torch.bincount(a[cls, :], minlength=n_way)
 
