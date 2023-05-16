@@ -2,21 +2,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from plot_cfg import *
 
+
 # Read csv
-columns = ['10to14', '10to18', '10to20', '10to30']
-df = pd.read_csv('csv/snr_range_test.csv')
+columns = [16, 32, 64, 128, 256, 512, 1024]
+
+# df = pd.read_csv('csv/size_cnn.csv')
+df = pd.read_csv('csv/size_vit.csv')
 
 snr_range = range(-20, 21, 2)
-results = [df[i].to_list() for i in columns]
+results = [df[str(i)].to_list() for i in columns]
 print(results)
 
 
 plt.rcParams['font.family'] = 'Arial'
 
-markers = ['*', '>', 'x', '.']
+markers = ['*', '>', 'x', '.', '^', '<', 'v']
 
 for i, model in enumerate(columns):
-    plt.plot(snr_range, results[i], label=f'{model}', marker=markers[i],
+    plt.plot(snr_range, results[i], label=f'sample_size {model}', marker=markers[i],
              markersize=16)
 
 plt.xlabel("Signal to Noise Ratio", fontsize=xlabel_fontsize)

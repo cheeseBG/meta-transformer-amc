@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from plot_cfg import *
 
 
 # Read csv
@@ -12,11 +13,6 @@ print(results)
 
 
 plt.rcParams['font.family'] = 'Arial'
-xlabel_fontsize = 30
-ylabel_fontsize = 30
-xticks_fontsize = 28
-yticks_fontsize = 28
-legend_fontsize = 20
 
 markers = ['*', '>', 'x', '.']
 
