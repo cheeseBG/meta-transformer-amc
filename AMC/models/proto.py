@@ -6,6 +6,7 @@ import numpy as np
 from runner.utils import euclidean_dist, get_config
 from models.robustcnn import *
 from models.vit import *
+from models.protonet import *
 
 
 class ProtoNet(nn.Module):
@@ -216,26 +217,8 @@ def load_protonet_conv(**kwargs):
     hid_dim = kwargs['hid_dim']
     z_dim = kwargs['z_dim']
 
-    def conv_block(in_channels, out_channels):
-        return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=(1, 3), padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-
-    encoder = nn.Sequential(
-        conv_block(x_dim[0], hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, z_dim),
-        Flatten()
-    )
-
+    encoder = ProtoNet_CNN(x_dim[0], hid_dim, z_dim)
+    
     return ProtoNet(encoder)
 
 
