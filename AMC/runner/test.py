@@ -3,7 +3,6 @@ import torch
 import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
-import wandb
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
 from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
