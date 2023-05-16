@@ -4,12 +4,16 @@ import matplotlib.pyplot as plt
 
 # Read csv
 columns = ['ResNet', 'CNN', 'ProtoNet', 'Proposed']
-df = pd.read_csv('csv/learning_result.csv')
+df1 = pd.read_csv('csv/learning_-20to20.csv')
+df2 = pd.read_csv('csv/learning_-10to20.csv')
+df3 = pd.read_csv('csv/learning_0to10.csv')
+df4 = pd.read_csv('csv/learning_0to20.csv')
 
 snr_range = range(-20, 21, 2)
-results = [df[i].to_list() for i in columns]
-print(results)
-
+results1 = [df1[i].to_list() for i in columns]
+results2 = [df2[i].to_list() for i in columns]
+results3 = [df3[i].to_list() for i in columns]
+results4 = [df4[i].to_list() for i in columns]
 
 plt.rcParams['font.family'] = 'Arial'
 xlabel_fontsize = 30
