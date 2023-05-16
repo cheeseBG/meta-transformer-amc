@@ -146,7 +146,7 @@ class AMCTestDataset(data.Dataset):
 
 
 class FewShotDataset(data.Dataset):
-    def __init__(self, root_path, num_support, num_query, mode='train', robust=False, snr_range=None, divide=False, sample_len=1024):
+    def __init__(self, root_path, num_support, num_query, train_mods, test_mods, mode='train', robust=False, snr_range=None, divide=False, sample_len=1024):
         self.root_path = root_path
         self.robust = robust
         self.snr_range = snr_range
@@ -157,6 +157,8 @@ class FewShotDataset(data.Dataset):
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
         self.sample_len = sample_len
+        self.train_mods = train_mods
+        self.test_mods = test_mods
 
         self.iq = self.data['X']
         self.onehot = self.data['Y']
@@ -171,13 +173,13 @@ class FewShotDataset(data.Dataset):
 
         # Sampling class
         if mode == 'train':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
+            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.train_mods for i in
                                  range(len(self.onehot))])
-            self.num_modulation = len(self.config['easy_class_indice'])
+            self.num_modulation = len(self.train_mods)
         elif mode == 'test':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in
+            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.test_mods for i in
                                  range(len(self.onehot))])
-            self.num_modulation = len(self.config['difficult_class_indice'])
+            self.num_modulation = len(self.test_mods)
         else:
             print('Mode argument error!')
             exit()
@@ -205,93 +207,6 @@ class FewShotDataset(data.Dataset):
             self.iq = self.iq[sampling_mask]
             self.onehot = self.onehot[sampling_mask]
             self.snr = self.snr[sampling_mask]
-
-        # Extract class labels
-        self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]
-        self.labels = np.unique(self.label_list)
-
-        # Extract indice of each labels
-        self.label_indices = {label: [i for i, x in enumerate(self.label_list) if x == label] for label in self.labels}
-
-        # few-shot variables
-        self.num_support = num_support
-        self.num_query = num_query
-        self.num_episode = len(self.snr) // ((self.num_support + self.num_query) * len(self.labels))
-
-    def __len__(self):
-        return self.num_episode
-
-    def __getitem__(self, idx):
-        # idx means index of episode
-        sample = dict()
-
-        if self.robust is True:
-            for label in self.labels:
-                sample[label] = dict()
-                label_indices = self.label_indices[label]
-
-                # support set
-                support_indices = random.sample(label_indices, self.num_support)
-                support_set = [np.concatenate((self.iq[i].transpose()[:, :self.sample_len],
-                                               np.flip(self.iq[i].transpose()[:, :self.sample_len], axis=1)), axis=0)
-                               for i in support_indices]
-                sample[label]['support'] = support_set
-
-                # query set
-                query_indices = list(set(label_indices) - set(support_indices))
-                query_indices = random.sample(query_indices, self.num_query)
-                query_set = [np.concatenate((self.iq[i].transpose(), np.flip(self.iq[i].transpose(), axis=1)), axis=0)
-                             for i in query_indices]
-                sample[label]['query'] = query_set
-
-        else:
-            for label in self.labels:
-                sample[label] = dict()
-                label_indices = self.label_indices[label]
-
-                # support set
-                support_indices = random.sample(label_indices, self.num_support)
-                support_set = [self.iq[i].transpose() for i in support_indices]
-                sample[label]['support'] = support_set
-
-                # query set
-                query_indices = list(set(label_indices) - set(support_indices))
-                query_indices = random.sample(query_indices, self.num_query)
-                query_set = [self.iq[i].transpose() for i in query_indices]
-                sample[label]['query'] = query_set
-
-        return sample
-
-
-class FewShotDatasetForOnce(data.Dataset):
-    def __init__(self, root_path, num_support, num_query, robust=False, snr_range=None, sample_len=1024):
-        self.root_path = root_path
-        self.robust = robust
-        self.snr_range = snr_range
-        self.config = get_config('config.yaml')
-        self.sample_len = sample_len
-
-        self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
-        self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
-
-        self.iq = self.data['X']
-        self.onehot = self.data['Y']
-        self.snr = np.squeeze(self.data['Z'])
-
-        # Sampling data in snr boundary
-        if self.snr_range is not None:
-            snr_mask = (self.snr_range[0] <= self.snr) & (self.snr <= self.snr_range[1])
-            self.iq = self.iq[snr_mask]
-            self.onehot = self.onehot[snr_mask]
-            self.snr = self.snr[snr_mask]
-
-        # Sampling class
-        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in range(len(self.onehot))])
-        self.num_modulation = len(self.config['difficult_class_indice'])
-
-        self.iq = self.iq[mod_mask]
-        self.onehot = self.onehot[mod_mask]
-        self.snr = self.snr[mod_mask]
 
         # Extract class labels
         self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]

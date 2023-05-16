@@ -12,12 +12,14 @@ from models.proto import load_protonet_conv, load_protonet_robustcnn, load_proto
 
 
 class Trainer:
-    def __init__(self, config, model_path=None):
+    def __init__(self, config, train_mods, test_mods, model_path=None):
         self.config = get_config(config)
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
         self.batch_size = self.config["batch_size"]
         self.model_path = model_path
+        self.train_mods = train_mods
+        self.test_mods = test_mods
 
         self.net = model_selection(self.config["model_name"])
 
@@ -125,10 +127,12 @@ class Trainer:
         train_data = FewShotDataset(self.config["dataset_path"],
                                     num_support=self.config["num_support"],
                                     num_query=self.config["num_query"],
+                                    train_mods=self.train_mods,
+                                    test_mods=self.test_mods,
                                     robust=robust,
                                     snr_range=self.config['snr_range'],
                                     divide=self.config['data_divide'],  # divide by train proportion
-                                    sample_len=self.config["train_sample_size"])
+                                    sample_len=self.config["train_sample_size"],)
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
