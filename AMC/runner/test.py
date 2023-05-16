@@ -148,7 +148,7 @@ class Tester:
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,
-                z_dim=11,
+                z_dim=24,
             )
         elif model_name == 'robustcnn':
             model = load_protonet_robustcnn()
