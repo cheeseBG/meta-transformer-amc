@@ -26,13 +26,13 @@ plt.figure(figsize=(15, 12))
 
 for i, model in enumerate(columns):
     plt.plot(snr_range, results1[i], label=f'{model} -20to20', color=colors[i],
-             marker=markers[0], linestyle=line_type[0], lw=3.0, markersize=16, mew=2.5)
+             marker=markers[0], linestyle=line_type[0], lw=lw, markersize=markersize, mew=mew)
     plt.plot(snr_range, results2[i], label=f'{model} -10to20', color=colors[i],
-             marker=markers[1], linestyle=line_type[1], lw=3.0, markersize=16, mew=2.5)
+             marker=markers[1], linestyle=line_type[1], lw=lw, markersize=markersize, mew=mew)
     plt.plot(snr_range, results3[i], label=f'{model} 0to10', color=colors[i],
-             marker=markers[2], linestyle=line_type[2], lw=3.0, markersize=16, mew=2.5)
+             marker=markers[2], linestyle=line_type[2], lw=lw, markersize=markersize, mew=mew)
     plt.plot(snr_range, results4[i], label=f'{model} 0to20', color=colors[i],
-             marker=markers[3], linestyle=line_type[3], lw=3.0, markersize=16, mew=2.5)
+             marker=markers[3], linestyle=line_type[3], lw=lw, markersize=markersize, mew=mew)
 
 plt.xlabel("Signal to Noise Ratio", fontsize=xlabel_fontsize)
 plt.ylabel("Classification Accuracy", fontsize=ylabel_fontsize)
