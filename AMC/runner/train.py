@@ -12,7 +12,7 @@ from models.proto import load_protonet_conv, load_protonet_robustcnn, load_proto
 
 
 class Trainer:
-    def __init__(self, config, train_mods, test_mods, model_path=None):
+    def __init__(self, config, train_mods, test_mods, test_case, model_path=None):
         self.config = get_config(config)
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
@@ -20,6 +20,7 @@ class Trainer:
         self.model_path = model_path
         self.train_mods = train_mods
         self.test_mods = test_mods
+        self.test_case = test_case
 
         self.net = model_selection(self.config["model_name"])
 
@@ -117,7 +118,7 @@ class Trainer:
         if model_name == 'robustcnn':
             robust = True
 
-        save_folder_name = self.config['save_folder_name']
+        save_folder_name = str(self.test_case)
 
         model_name = self.config['fs_model']
         robust = False
@@ -176,7 +177,7 @@ class Trainer:
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
             scheduler.step()
 
-            save_path = os.path.join(self.config["save_path"], save_folder_name)
+            save_path = os.path.join(self.config["save_path"], str(self.test_case))
             os.makedirs(save_path, exist_ok=True)
             torch.save(model.state_dict(), os.path.join(save_path, "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(save_path, "{}.tar".format(epoch))))

@@ -119,7 +119,7 @@ class Tester:
         n_way = len(self.test_mods)
         snr_range = range(self.config["test_snr_range"][0], self.config["test_snr_range"][1] + 1, 2)
 
-        load_folder_name = self.config['save_folder_name']
+        load_folder_name = self.config['select_test']
 
         model_name = self.config['fs_model']
         robust = False

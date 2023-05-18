@@ -8,14 +8,6 @@ import pandas as pd
 import random
 
 if __name__ == '__main__':
-    def save_result(result_list, test_num):
-        tmp_dict = dict()
-        for i in range(test_num):
-            tmp_dict[f'test_{i+1}'] = result_list[i]
-        df = pd.DataFrame(tmp_dict)
-        df.to_csv('result.csv', index=False)
-
-
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
@@ -29,17 +21,24 @@ if __name__ == '__main__':
 
     config = get_config("config.yaml")
 
-    test_case = config["test_case"]
+    test_case_num = config["test_case_num"]
     classes = config["class_indice"]
-    train_check = [0] * (len(classes))
+    test_case = config["select_test"]
+    test_classes = config[test_case]
+    total_test_mods = [mod for mod in classes if mod not in test_classes]
 
-    test_list = []
-    for t in range(test_case):
-        train_mods = random.sample(classes, config["train_num"])
-        test_mods = [mod for mod in classes if mod not in train_mods]
+    train_dict = {}
+    test_dict = {}
+    test_result_dict = {}
+    for t in range(test_case_num):
+        #train_mods = random.sample(classes, config["train_way"])
+        test_mods = random.sample(total_test_mods, config["test_way"])
 
-        for i in train_mods:
-            train_check[i] += 1
+        #train_dict[f'test_{t+1}'] = train_mods
+        test_dict[f'test_{t + 1}'] = test_mods
+
+        #for i in train_mods:
+        #    train_check[i] += 1
 
         # # Supervised learning
         # if args.lr_mode == 'sv':
@@ -54,17 +53,24 @@ if __name__ == '__main__':
 
         # Few shot learning
         #logger.info(f'Start few-shot learning test case {t+1}')
-        #trainer = Trainer("config.yaml", train_mods, test_mods)
+        #trainer = Trainer("config.yaml", train_mods, test_mods, t+1)
         #trainer.fs_train(now)
 
-        tester = Tester("config.yaml", train_mods, test_mods)
-        logger.info('Size Test')
+        tester = Tester("config.yaml", test_case, test_mods)
+        logger.info(f'Unseen Test: {test_case}_{t}')
         acc_per_snr = tester.unseen_test(now)
 
-        test_list.append(acc_per_snr)
+        test_result_dict[f'test_{t + 1}'] = acc_per_snr
 
-        # Save result
-        save_result(test_list, test_case)
-        tmp_dict = {'train_count': train_check}
-        df = pd.DataFrame(tmp_dict)
-        df.to_csv('train_check.csv', index=False)
+        #test_list.append(acc_per_snr)
+        #print(train_dict)
+
+    # Save result
+    #save_result(test_list, t+1)
+    #df = pd.DataFrame(train_dict)
+    #df.to_csv('train_mods.csv', index=False)
+
+    df = pd.DataFrame(test_dict)
+    df.to_csv(f'unseen_result/{test_case}_test_mods.csv', index=False)
+    df = pd.DataFrame(test_result_dict)
+    df.to_csv(f'unseen_result/{test_case}_test_result.csv', index=False)
