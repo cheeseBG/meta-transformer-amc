@@ -1,7 +1,7 @@
 # setting number of test case for unseen eval
 test_case_num: 100
 train_way: 12
-test_way: 5
+test_way: 3
 
 
 
@@ -38,11 +38,12 @@ testB: [1, 3, 5, 7, 9, 10, 11, 14, 17, 19, 21, 22]
 testC: [2, 3, 4, 6, 7, 9, 13, 15, 17, 19, 21, 22]
 testB_1shot: [1, 3, 5, 7, 9, 10, 11, 14, 17, 19, 21, 22]
 testB_10shot: [1, 3, 5, 7, 9, 10, 11, 14, 17, 19, 21, 22]
-select_test: testB_10shot
+testB_15shot: [1, 3, 5, 7, 9, 10, 11, 14, 17, 19, 21, 22]
+select_test: testB
 
 # few-shot learning parameters
 fs_model: vit # robustcnn, rewis, vit
-num_support: 10
+num_support: 5
 num_query: 10
 
 ##### unseen test parameters
