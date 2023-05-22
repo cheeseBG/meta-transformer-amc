@@ -6,7 +6,7 @@ test_way: 3
 
 
 # data parameters
-dataset_path: /home/inclab2/Gitrepo/WiReal/amc_dataset/RML2018
+dataset_path: ../amc_dataset/RML2018
 save_path: checkpoint/paper/unseen/vit
 epoch: 50
 
@@ -22,7 +22,7 @@ lr_gamma: 0.8
 print_iter: 400
 
 # test parameters
-test_dataset_path: /home/inclab2/Gitrepo/WiReal/amc_dataset/RML2018
+test_dataset_path: ../amc_dataset/RML2018
 load_test_path: checkpoint/paper/unseen/vit
 show_conf_matrix: False
 
