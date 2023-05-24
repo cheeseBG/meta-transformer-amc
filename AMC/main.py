@@ -7,6 +7,8 @@ from runner.utils import get_config
 import pandas as pd
 import random
 
+random.seed(50)
+
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -33,7 +35,7 @@ if __name__ == '__main__':
     for t in range(test_case_num):
         #train_mods = random.sample(classes, config["train_way"])
         test_mods = random.sample(total_test_mods, config["test_way"])
-        #test_mods = test_classes + test_mods
+        test_mods = test_classes + test_mods
         print(test_mods)
 
         #train_dict[f'test_{t+1}'] = train_mods
@@ -73,6 +75,6 @@ if __name__ == '__main__':
     #df.to_csv('train_mods.csv', index=False)
 
     df = pd.DataFrame(test_dict)
-    df.to_csv(f'unseen_result/{test_case}_3way_mods.csv', index=False)
+    df.to_csv(f'unseen_result/{test_case}_add1_15shot_mods.csv', index=False)
     df = pd.DataFrame(test_result_dict)
-    df.to_csv(f'unseen_result/{test_case}_3way_result.csv', index=False)
+    df.to_csv(f'unseen_result/{test_case}_add1_15shot_result.csv', index=False)
