@@ -4,9 +4,9 @@ from plot_cfg import *
 
 
 # Read csv
-df1 = pd.read_csv('csv/testB_3way_result.csv')
-df2 = pd.read_csv('csv/testB_result.csv')
-df3 = pd.read_csv('csv/testB_7way_result.csv')
+df1 = pd.read_csv('csv/testB_add1_15shot_result.csv')
+df2 = pd.read_csv('csv/testB_add3_15shot_result.csv')
+df3 = pd.read_csv('csv/testB_add5_15shot_result.csv')
 
 snr_range = range(-20, 21, 2)
 results1 = df1.mean(axis='columns').to_list()
@@ -22,11 +22,11 @@ line_type = ['solid', 'dashed', 'dashdot']
 plt.figure(figsize=(15, 12))
 
 
-plt.plot(snr_range, results1, label=f'3unseen', color=colors[0],
+plt.plot(snr_range, results1, label=f'testB+1way', color=colors[0],
          marker=markers[0], linestyle=line_type[0], lw=lw, markersize=markersize, mew=mew)
-plt.plot(snr_range, results2, label=f'5unseen', color=colors[1],
+plt.plot(snr_range, results2, label=f'testB+3way', color=colors[1],
          marker=markers[1], linestyle=line_type[1], lw=lw, markersize=markersize, mew=mew)
-plt.plot(snr_range, results3, label=f'7unseen', color=colors[2],
+plt.plot(snr_range, results3, label=f'testB+5way', color=colors[2],
          marker=markers[2], linestyle=line_type[2], lw=lw, markersize=markersize, mew=mew)
 
 
@@ -37,4 +37,4 @@ plt.yticks(fontsize=yticks_fontsize)
 plt.legend(framealpha=1, fontsize=legend_fontsize)
 plt.grid()
 
-plt.savefig('figures/way.png', bbox_inches='tight')
+plt.savefig('figures/unseen_add_15shot.png', bbox_inches='tight')

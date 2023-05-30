@@ -4,14 +4,14 @@ from plot_cfg import *
 
 
 # Read csv
-df1 = pd.read_csv('csv/testB_addtest_result.csv')
-# df2 = pd.read_csv('csv/testB_result.csv')
-# df3 = pd.read_csv('csv/testC_result.csv')
+df1 = pd.read_csv('csv/testB_add1_result.csv')
+df2 = pd.read_csv('csv/testB_add3_result.csv')
+#df3 = pd.read_csv('csv/testB_add5_result.csv')
 
 snr_range = range(-20, 21, 2)
 results1 = df1.mean(axis='columns').to_list()
-# results2 = df2.mean(axis='columns').to_list()
-# results3 = df3.mean(axis='columns').to_list()
+results2 = df2.mean(axis='columns').to_list()
+#results3 = df3.mean(axis='columns').to_list()
 
 plt.rcParams['font.family'] = 'Arial'
 
@@ -22,12 +22,12 @@ line_type = ['solid', 'dashed', 'dashdot']
 plt.figure(figsize=(15, 12))
 
 
-plt.plot(snr_range, results1, label=f'testB+5mods', color=colors[0],
+plt.plot(snr_range, results1, label=f'seen+1unseen', color=colors[0],
          marker=markers[0], linestyle=line_type[0], lw=lw, markersize=markersize, mew=mew)
-# plt.plot(snr_range, results2, label=f'testB', color=colors[1],
-#          marker=markers[1], linestyle=line_type[1], lw=lw, markersize=markersize, mew=mew)
-# plt.plot(snr_range, results3, label=f'testC', color=colors[2],
-#          marker=markers[2], linestyle=line_type[2], lw=lw, markersize=markersize, mew=mew)
+plt.plot(snr_range, results2, label=f'seen+3unseen', color=colors[1],
+         marker=markers[1], linestyle=line_type[1], lw=lw, markersize=markersize, mew=mew)
+#plt.plot(snr_range, results3, label=f'testB+5way', color=colors[2],
+         #marker=markers[2], linestyle=line_type[2], lw=lw, markersize=markersize, mew=mew)
 
 
 plt.xlabel("Signal to Noise Ratio", fontsize=xlabel_fontsize)
