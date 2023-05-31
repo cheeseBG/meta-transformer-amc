@@ -22,9 +22,9 @@ line_type = ['solid', 'dashed', 'dashdot']
 plt.figure(figsize=(15, 12))
 
 
-plt.plot(snr_range, results1, label=f'seen+1unseen', color=colors[0],
+plt.plot(snr_range, results1, label=f'12seen+1unseen', color=colors[0],
          marker=markers[0], linestyle=line_type[0], lw=lw, markersize=markersize, mew=mew)
-plt.plot(snr_range, results2, label=f'seen+3unseen', color=colors[1],
+plt.plot(snr_range, results2, label=f'12seen+3unseen', color=colors[1],
          marker=markers[1], linestyle=line_type[1], lw=lw, markersize=markersize, mew=mew)
 #plt.plot(snr_range, results3, label=f'testB+5way', color=colors[2],
          #marker=markers[2], linestyle=line_type[2], lw=lw, markersize=markersize, mew=mew)
