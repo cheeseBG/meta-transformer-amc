@@ -1,5 +1,5 @@
 # data parameters
-dataset_path: ../amc_dataset/RML2018
+dataset_path: ./amc_dataset/RML2018
 snr_range: [20, 20]
 save_path: checkpoint/paper/learning/vit/-10to20
 epoch: 50
@@ -16,7 +16,7 @@ lr: 0.01 #  resnet: 0.001 / robustcnn: 0.01
 print_iter: 400
 
 # test parameters
-test_dataset_path: ../amc_dataset/RML2018
+test_dataset_path: ./amc_dataset/RML2018
 load_test_path: checkpoint/paper/learning/vit/-10to20/49.tar
 
 # AMC dataset configuration
