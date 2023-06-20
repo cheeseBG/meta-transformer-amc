@@ -3,7 +3,6 @@ import torch
 import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
-import wandb
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset, FewShotDatasetForOnce
 from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
@@ -108,27 +107,6 @@ class Tester:
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        # Wandb
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="AMC_few-shot",
-            group=self.config['fs_model'],
-            name=now,
-            notes=f'num_support:{self.config["num_support"]},'
-                  f' num_query:{self.config["num_query"]},'
-                  f' robust:{True},'
-                  f' snr_range:{self.config["snr_range"]},'
-                  f' train_class_indices:{self.config["train_class_indices"]}',
-
-            # track hyperparameters and run metadata
-            config={
-                "learning_rate": self.config["lr"],
-                "architecture": self.config['fs_model'],
-                "dataset": "RML2018",
-                "epochs": self.config["epoch"],
-            }
-        )
-
         model_name = self.config['fs_model']
         robust = False
         if model_name != 'vit':
@@ -177,32 +155,10 @@ class Tester:
         plot_confusion_matrix(conf_mat,
                               classes=[self.config['total_class'][cls] for cls in self.config['test_class_indices']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
-        wandb.log({"test_acc": avg_acc})
 
     def fs_test_once(self, now):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
-
-        # Wandb
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="AMC_few-shot",
-            group=self.config['fs_model'],
-            name=now,
-            notes=f'num_support:{self.config["num_support"]},'
-                  f' num_query:{self.config["num_query"]},'
-                  f' robust:{True},'
-                  f' snr_range:{self.config["snr_range"]},'
-                  f' train_class_indices:{self.config["train_class_indices"]}',
-
-            # track hyperparameters and run metadata
-            config={
-                "learning_rate": self.config["lr"],
-                "architecture": self.config['fs_model'],
-                "dataset": "RML2018",
-                "epochs": self.config["epoch"],
-            }
-        )
 
         n_way = len(self.config['test_class_indices'])
 
@@ -254,6 +210,5 @@ class Tester:
                               classes=[self.config['total_class'][cls] for cls in
                                        self.config['test_class_indices']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
-        wandb.log({"new_test__acc": avg_acc})
 
 

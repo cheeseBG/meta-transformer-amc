@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
-import wandb
 from datetime import datetime
 from torch.optim import lr_scheduler, Adam
 from runner.utils import get_config, model_selection, torch_seed
@@ -108,26 +107,6 @@ class Trainer:
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="AMC_few-shot",
-            group=self.config['fs_model'],
-            name=now,
-            notes=f'num_support:{self.config["num_support"]},'
-                  f' num_query:{self.config["num_query"]},'
-                  f' robust:{True},'
-                  f' snr_range:{self.config["snr_range"]},'
-                  f' train_class_indices:{self.config["train_class_indices"]}',
-
-            # track hyperparameters and run metadata
-            config={
-                "learning_rate": self.config["lr"],
-                "architecture": self.config['fs_model'],
-                "dataset": "RML2018",
-                "epochs": self.config["epoch"],
-            }
-        )
-
         model_name = self.config['fs_model']
         robust = False
         if model_name != 'vit':
@@ -184,8 +163,6 @@ class Trainer:
             epoch_acc = train_acc / (episode+1)
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
             scheduler.step()
-
-            wandb.log({"acc": epoch_acc, "loss": epoch_loss})
 
             os.makedirs(self.config["save_path"], exist_ok=True)
             torch.save(model.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
