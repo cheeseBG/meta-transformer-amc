@@ -1,4 +1,4 @@
-# 
+# meta-transformer-amc
 
 ## Toward Scalable Automatic Modulation Classification via Meta-Learning
 This paper is under review.
@@ -14,12 +14,19 @@ This project has been developed and tested under the following computing environ
 - GeForce RTX 2080 Ti 11GB
 - Python 3.8
 
-## Dataset and pre-trained model
+## Installation
+
+* Clone the repository and install the required dependencies.
+```
+pip install -r requirements.txt
+```
+
+## Download modulation dataset and pre-trained model
 1. Click [here](https://www.deepsig.ai/datasets) to download the RadioML2018.01A dataset.
 
-2. Click [google drive](https://drive.google.com/file/d/1x_amkYkb3m3bdpPeRztMWhJUWxmBSzmk/view?usp=sharing) to download pre-trained models
+2. Click [google drive](https://drive.google.com/file/d/1x_amkYkb3m3bdpPeRztMWhJUWxmBSzmk/view?usp=sharing) to download pre-trained models.
 
-2. Place the downloaded dataset and pre-trained models as follows:
+3. Place the downloaded dataset and pre-trained models as follows:
 ```
 meta-transformer-amc
    |——————amc_dataset
@@ -30,25 +37,16 @@ meta-transformer-amc
             └——————learning
             └——————size
             └——————unseen
- 
 ```
 
-
-## Installation
-
-* Clone the repository and install the required dependencies
-```
-pip install -r requirements.txt
-```
 ## Usage
-
+The default setting classifies 5 unseen modulations using the proposed model pre-trained with 12 random modulations:
 ```
-cd AMC
-
-python main.py fs
+python main.py fs test
 ```
-
-
+*If you want to run another evaluation, you can proceed by modifying the `config.yaml`.*  
+*Various evaluation cases are specified in the paper.*  
+*We will update this repository after the paper is published in the future.*
 
 
 
@@ -57,10 +55,17 @@ python main.py fs
 <img src="./paper_figures/figures/overview.jpg" width="780" height="450"/>
 </div>
 
+- Meta-training : the encoder $f_{\theta}$  learns the metric space using prototypes of each class.
+- Meta-testing  : module uses trained $f_{\theta}$ for new unseen modulations with fewer (1-5) collected samples. 
+
+
 ## Few-shot learning evaluation
 <div align="center">
 <img src="./paper_figures/figures/fewshot.png" width="400" height="300"/> 
 </div>
+
+- This figure shows the results of evaluating 5 random unseen modulations with few shots (1, 5, 10, 15).
+- Accuracy is the average value performed 100 times for each test.
 
 ## Input size scalability evaluation
 <div align="center">
@@ -68,5 +73,10 @@ python main.py fs
 <img src="./paper_figures/figures/size_vit.png" width="400" height="250"/>
 </div>
 
+- Evaluating the proposed model (**right figure**) using smaller input frames while it was trained with 2x1024 frames.
+- The left figure shows the limitations on the input size scalability of CNN-based models.  
+- Proposed model only leads to a slight performance degradation, with the minimum difference being approximately **±0.4%**.  
 
 
+## Citation
+This paper is under review and additional evaluation results and citations will be updated later.
