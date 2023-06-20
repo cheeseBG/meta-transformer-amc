@@ -1,5 +1,4 @@
-AMC/checkpoint/
+checkpoint/
 amc_dataset/
-AMC/wandb
-AMC/models/__pycache__/
-AMC/runner/__pycache__/
+models/__pycache__/
+runner/__pycache__/

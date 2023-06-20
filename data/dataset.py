@@ -38,9 +38,9 @@ class AMCTrainDataset(data.Dataset):
             self.onehot = self.onehot[snr_mask]
             self.snr = self.snr[snr_mask]
 
-        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['train_class_indices'] for i in
                              range(len(self.onehot))])
-        self.num_modulation = len(self.config['easy_class_indice'])
+        self.num_modulation = len(self.config['train_class_indices'])
 
         self.iq = self.iq[mod_mask]
         self.onehot = self.onehot[mod_mask]
@@ -103,9 +103,9 @@ class AMCTestDataset(data.Dataset):
             self.onehot = self.onehot[snr_mask]
             self.snr = self.snr[snr_mask]
 
-        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['test_class_s'] for i in
                              range(len(self.onehot))])
-        self.num_modulation = len(self.config['difficult_class_indice'])
+        self.num_modulation = len(self.config['test_class_indices'])
 
         self.iq = self.iq[mod_mask]
         self.onehot = self.onehot[mod_mask]
@@ -166,13 +166,13 @@ class FewShotDataset(data.Dataset):
 
         # Sampling class
         if mode == 'train':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['easy_class_indice'] for i in
+            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['train_class_indices'] for i in
                                  range(len(self.onehot))])
-            self.num_modulation = len(self.config['easy_class_indice'])
+            self.num_modulation = len(self.config['train_class_indices'])
         elif mode == 'test':
-            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in
+            mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['test_class_indices'] for i in
                                  range(len(self.onehot))])
-            self.num_modulation = len(self.config['difficult_class_indice'])
+            self.num_modulation = len(self.config['test_class_indices'])
         else:
             print('Mode argument error!')
             exit()
@@ -185,7 +185,7 @@ class FewShotDataset(data.Dataset):
         self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]
         self.labels = np.unique(self.label_list)
 
-        # Extract indice of each labels
+        # Extract indices of each labels
         self.label_indices = {label: [i for i, x in enumerate(self.label_list) if x == label] for label in self.labels}
 
         # few-shot variables
@@ -259,8 +259,8 @@ class FewShotDatasetForOnce(data.Dataset):
             self.snr = self.snr[snr_mask]
 
         # Sampling class
-        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['difficult_class_indice'] for i in range(len(self.onehot))])
-        self.num_modulation = len(self.config['difficult_class_indice'])
+        mod_mask = np.array([int(argwhere(self.onehot[i] == 1)) in self.config['test_class_indices'] for i in range(len(self.onehot))])
+        self.num_modulation = len(self.config['test_class_indices'])
 
         self.iq = self.iq[mod_mask]
         self.onehot = self.onehot[mod_mask]
@@ -270,7 +270,7 @@ class FewShotDatasetForOnce(data.Dataset):
         self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.snr))]
         self.labels = np.unique(self.label_list)
 
-        # Extract indice of each labels
+        # Extract indices of each labels
         self.label_indices = {label: [i for i, x in enumerate(self.label_list) if x == label] for label in self.labels}
 
         # few-shot variables

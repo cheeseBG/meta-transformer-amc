@@ -118,7 +118,7 @@ class Tester:
                   f' num_query:{self.config["num_query"]},'
                   f' robust:{True},'
                   f' snr_range:{self.config["snr_range"]},'
-                  f' train_class_indice:{self.config["easy_class_indice"]}',
+                  f' train_class_indices:{self.config["train_class_indices"]}',
 
             # track hyperparameters and run metadata
             config={
@@ -134,7 +134,7 @@ class Tester:
         if model_name != 'vit':
             robust = True
 
-        n_way = len(self.config['difficult_class_indice'])
+        n_way = len(self.config['test_class_indices'])
 
         test_data = FewShotDataset(self.config["dataset_path"],
                                    num_support=self.config["num_support"],
@@ -175,7 +175,7 @@ class Tester:
 
         avg_acc = running_acc / (episode+1)
         plot_confusion_matrix(conf_mat,
-                              classes=[self.config['total_class'][cls] for cls in self.config['difficult_class_indice']])
+                              classes=[self.config['total_class'][cls] for cls in self.config['test_class_indices']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
         wandb.log({"test_acc": avg_acc})
 
@@ -193,7 +193,7 @@ class Tester:
                   f' num_query:{self.config["num_query"]},'
                   f' robust:{True},'
                   f' snr_range:{self.config["snr_range"]},'
-                  f' train_class_indice:{self.config["easy_class_indice"]}',
+                  f' train_class_indices:{self.config["train_class_indices"]}',
 
             # track hyperparameters and run metadata
             config={
@@ -204,7 +204,7 @@ class Tester:
             }
         )
 
-        n_way = len(self.config['difficult_class_indice'])
+        n_way = len(self.config['test_class_indices'])
 
         model_name = self.config['fs_model']
         robust = False
@@ -252,7 +252,7 @@ class Tester:
         avg_acc = running_acc / (episode+1)
         plot_confusion_matrix(conf_mat,
                               classes=[self.config['total_class'][cls] for cls in
-                                       self.config['difficult_class_indice']])
+                                       self.config['test_class_indices']])
         print('Test results -- Acc: {:.4f}'.format(avg_acc))
         wandb.log({"new_test__acc": avg_acc})
 

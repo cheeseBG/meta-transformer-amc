@@ -117,7 +117,7 @@ class Trainer:
                   f' num_query:{self.config["num_query"]},'
                   f' robust:{True},'
                   f' snr_range:{self.config["snr_range"]},'
-                  f' train_class_indice:{self.config["easy_class_indice"]}',
+                  f' train_class_indices:{self.config["train_class_indices"]}',
 
             # track hyperparameters and run metadata
             config={
