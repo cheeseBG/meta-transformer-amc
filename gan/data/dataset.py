@@ -111,7 +111,7 @@ class AMCTestDataset(data.Dataset):
         self.onehot = self.onehot[mod_mask]
         self.snr = self.snr[mod_mask]
 
-        # Sampling test data
+        # Sampling train data
         # each modulation-snr has 4096 I/Q samples
         sampling_mask = []
         for _ in range(self.num_modulation * len(np.unique(self.snr))):
