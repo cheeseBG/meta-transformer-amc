@@ -2,3 +2,7 @@ checkpoint/
 amc_dataset/
 models/__pycache__/
 runner/__pycache__/
+.gan/gan_checkpoint/
+.gan/gan_results/
+
+
