@@ -8,10 +8,9 @@ import torch.optim as optim
 import torch.utils.data as DATA
 import imageio
 from itertools import chain
-from dataloader.dataset import NoiseDataset, SVLDataset
+from gan_loader import AMCDataset
 from models.discogan import *
 from runner.utils import torch_seed, get_config
-
 
 
 parser = argparse.ArgumentParser(description='PyTorch implementation of DiscoGAN')
@@ -41,7 +40,7 @@ def get_fm_loss(real_feats, fake_feats, criterion):
 
     return losses
 
-def get_gan_loss(dis_real, dis_fake, criterion, cuda):
+def get_gan_loss(label, dis_real, dis_fake, criterion, cuda):
     labels_dis_real = torch.ones([dis_real.size()[0], 1])
     labels_dis_fake = torch.zeros([dis_fake.size()[0], 1])
     labels_gen = torch.ones([dis_fake.size()[0], 1])
@@ -92,27 +91,19 @@ def main():
         model_path = os.path.join(model_path, 'original')
         os.makedirs(model_path, exist_ok=True)
 
-    
-    
-
     train_dataset = None
     test_dataset = None
 
-    if args.noise == 'true':
-        # Test A: walk noise
-        # Test B: Sit noise
-        train_dataset = NoiseDataset(win_size=cfg['window_size'], mode='train')
-        test_dataset = NoiseDataset(win_size=cfg['window_size'], mode='test')
-    elif args.noise == 'false': 
-        train_dataset = SVLDataset(data_path=cfg['train_dataset_path'], 
-                                   win_size=cfg['window_size'],
-                                   train_proportion=1.0,
-                                   gan='true')
-        test_dataset = SVLDataset(data_path=cfg['test_dataset_path'], 
-                                   win_size=cfg['window_size'],
-                                   train_proportion=1.0,
-                                   gan='true')
-
+    train_dataset = AMCDataset(data_path='../amc_dataset/RML2018', 
+                                mode='train',
+                                snr_A=-20,
+                                snr_B=20,
+                                label='OOK')
+    test_dataset = AMCDataset(data_path='../amc_dataset/RML2018', 
+                                mode='test',
+                                snr_A=-20,
+                                snr_B=20,
+                                label='OOK')
 
     generator_A = Generator()
     generator_B = Generator()
@@ -155,18 +146,23 @@ def main():
 
     for epoch in range(epoch_size):
         print(f'==== Start epoch {epoch} ====')
-        for A, B in tqdm.tqdm(train_dataloader):
+        for sample_A, sample_B in tqdm.tqdm(train_dataloader):
             generator_A.zero_grad()
             generator_B.zero_grad()
             discriminator_A.zero_grad()
             discriminator_B.zero_grad()
 
+            A = sample_A['data']
+            B = sample_B['data']
+            A_label = sample_A['label']
+            B_label = sample_B['label']
+
             if cuda:
                 A = A.cuda()
                 B = B.cuda()
 
-            A = A.unsqueeze(1).float()
-            B = B.unsqueeze(1).float()
+            A = A.float()
+            B = B.float()
 
             AB = generator_B(A)
             BA = generator_A(B)
@@ -182,14 +178,14 @@ def main():
             A_dis_real, A_feats_real = discriminator_A(A)
             A_dis_fake, A_feats_fake = discriminator_A(BA)
 
-            dis_loss_A, gen_loss_A = get_gan_loss(A_dis_real, A_dis_fake, gan_criterion, cuda)
+            dis_loss_A, gen_loss_A = get_gan_loss(A_label, A_dis_real, A_dis_fake, gan_criterion, cuda)
             fm_loss_A = get_fm_loss(A_feats_real, A_feats_fake, feat_criterion)
 
             # Real/Fake GAN Loss (B)
             B_dis_real, B_feats_real = discriminator_B(B)
             B_dis_fake, B_feats_fake = discriminator_B(AB)
 
-            dis_loss_B, gen_loss_B = get_gan_loss(B_dis_real, B_dis_fake, gan_criterion, cuda)
+            dis_loss_B, gen_loss_B = get_gan_loss(B_label, B_dis_real, B_dis_fake, gan_criterion, cuda)
             fm_loss_B = get_fm_loss(B_feats_real, B_feats_fake, feat_criterion)
 
             # Total Loss
@@ -230,11 +226,11 @@ def main():
                 with torch.no_grad():
                     for test_A, test_B in tqdm.tqdm(test_dataloader):
                         if cuda:
-                            test_A = test_A.cuda()
-                            test_B = test_B.cuda()
+                            test_A = test_A['data'].cuda()
+                            test_B = test_B['data'].cuda()
                         
-                        test_A = test_A.unsqueeze(1).float()
-                        test_B = test_B.unsqueeze(1).float()
+                        test_A = test_A.float()
+                        test_B = test_B.float()
 
                         AB = generator_B(test_A)
                         BA = generator_A(test_B)

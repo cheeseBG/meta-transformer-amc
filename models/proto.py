@@ -7,6 +7,7 @@ from runner.utils import euclidean_dist, get_config
 from models.robustcnn import *
 from models.vit import *
 from models.protonet import *
+from models.lstm import *
 
 
 class ProtoNet(nn.Module):
@@ -252,3 +253,12 @@ def load_protonet_vit():
 
     )
     return ProtoNet(encoder)
+
+# def load_protonet_lstm():
+#     config = get_config('config.yaml')
+
+#     encoder = LSTM(input_size=)
+
+#     return ProtoNet(encoder)
+
+    
