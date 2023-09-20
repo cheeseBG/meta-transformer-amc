@@ -45,7 +45,7 @@ class ProtoNet(nn.Module):
 
         x_support = torch.from_numpy(x_support).cuda(0)
         x_query = torch.from_numpy(x_query).cuda(0)
-
+        
         # target indices are 0 ... n_way-1
         target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
         target_inds = Variable(target_inds, requires_grad=False)
