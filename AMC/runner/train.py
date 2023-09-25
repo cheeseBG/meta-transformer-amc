@@ -8,9 +8,9 @@ import wandb
 from datetime import datetime
 from torch.optim import lr_scheduler, Adam
 from runner.utils import get_config, model_selection
-from data.dataset import AMCTrainDataset, FewShotDataset
-from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
-
+from data.dataset import AMCTrainDataset, FewShotDataset,FewShotDataset2016
+from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit, load_protonet_lstm, load_protonet_daelstm
+import yaml
 
 class Trainer:
     def __init__(self, config, model_path=None):
@@ -106,65 +106,81 @@ class Trainer:
             torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
 
-    def fs_train(self, now):
+    def fs_train(self, now, data_name):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
         # ################## Wandb setting #############################
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="AMC_few-shot",
-            # group=self.config['fs_model'],
-            # group="Test Sweep",
-            group="Size_test2",
-            name=now,
-            notes=f'num_support:{self.config["num_support"]},'
-                  f'num_query:{self.config["num_query"]},'
-                  f'robust:{True},'
-                  f'snr_range:{self.config["snr_range"]},'
-                  f'train_class_indice:{self.config["easy_class_indice"]},'
-                  f'test_class_indice:{self.config["difficult_class_indice"]}'
-                  f'train_sample_size:{self.config["train_sample_size"]},'
-                  f'test_sample_size:{self.config["test_sample_size"]}',
+        # wandb.init(
+        #     # set the wandb project where this run will be logged
+        #     project="AMC_few-shot",
+        #     # group=self.config['fs_model'],
+        #     # group="Test Sweep",
+        #     group="extension_test",
+        #     name=now,
+        #     notes=f'num_support:{self.config["num_support"]},'
+        #           f'num_query:{self.config["num_query"]},'
+        #           f'robust:{True},'
+        #           f'snr_range:{self.config["snr_range"]},'
+        #           f'train_class_indice:{self.config["train_class_indice"]},'
+        #           f'test_class_indice:{self.config["test_class_indice"]}'
+        #           f'train_sample_size:{self.config["train_sample_size"]},'
+        #           f'test_sample_size:{self.config["test_sample_size"]}',
 
-            # track hyperparameters and run metadata
-            config={
-                # "learning_rate": self.config["lr"],
-                "architecture": self.config['fs_model'],
-                "dataset": "RML2018",
-                # "epochs": self.config["epoch"],
+        #     # track hyperparameters and run metadata
+        #     config={
+        #         # "learning_rate": self.config["lr"],
+        #         "architecture": self.config['fs_model'],
+        #         "dataset": "RML2018",
+        #         # "epochs": self.config["epoch"],
 
-                # "learning_rate": 0.01,
-                # "momentum": 0.9,
-                # "batch_size": 128,
-                # "epochs": 30,
-                # "scheduler_step_size": 10,
-                # "scheduler_gamma":0.1
+        #         # "learning_rate": 0.01,
+        #         # "momentum": 0.9,
+        #         # "batch_size": 128,
+        #         # "epochs": 30,
+        #         # "scheduler_step_size": 10,
+        #         # "scheduler_gamma":0.1
 
-            }
-        )
+        #     }
+        # )
+
+        with open('sweep_patch.yaml') as f:
+            sweep_config = yaml.load(f, Loader=yaml.FullLoader)
+        
+        run = wandb.init(config=sweep_config)
+        patch_size = wandb.config.patch_size
         w_config = wandb.config
         # ###############################################################
 
         model_name = self.config['fs_model']
         robust = False
-        if model_name == 'robustcnn':
+        if model_name in ['robustcnn']:
             robust = True
+        
+        extension = self.config['extension']
 
-        save_folder_name = self.config['save_folder_name']
+        save_folder_name = self.config['save_folder_name']+str(patch_size)
 
         model_name = self.config['fs_model']
-        robust = False
-        if model_name != 'vit':
-            robust = True
 
-        train_data = FewShotDataset(self.config["dataset_path"],
-                                    num_support=self.config["num_support"],
-                                    num_query=self.config["num_query"],
-                                    robust=robust,
-                                    snr_range=self.config['snr_range'],
-                                    divide=self.config['data_divide'],  # divide by train proportion
-                                    sample_len=self.config["train_sample_size"])
+        if data_name == 'RML2018':
+            train_data = FewShotDataset(self.config["dataset_path"],
+                                        num_support=self.config["num_support"],
+                                        num_query=self.config["num_query"],
+                                        robust=robust,
+                                        extension=extension,
+                                        snr_range=self.config['snr_range'],
+                                        divide=self.config['data_divide'],  # divide by train proportion
+                                        sample_len=self.config["train_sample_size"])
+        elif data_name == 'RML2016':
+            train_data = FewShotDataset2016(self.config["dataset_path_2016"],
+                                        num_support=self.config["num_support"],
+                                        num_query=self.config["num_query"],
+                                        robust=robust,
+                                        extension=extension,
+                                        snr_range=self.config['snr_range'],
+                                        divide=self.config['data_divide'],  # divide by train proportion
+                                        sample_len=self.config["train_sample_size_2016"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
@@ -172,7 +188,7 @@ class Trainer:
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,
-                z_dim=11,
+                z_dim=24,
             )
             optimizer = Adam(model.parameters(), lr=0.001)
             scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
@@ -183,14 +199,24 @@ class Trainer:
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
 
         elif model_name == 'vit':
-            model = load_protonet_vit()
+            model = load_protonet_vit(patch_size)
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
+        
+        elif model_name == 'lstm':
+            model = load_protonet_lstm()
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
+        
+        elif model_name == 'daelstm':
+            model = load_protonet_daelstm()
             optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
         for epoch in range(self.config["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
             print('-' * 10)
-
+           
             # while epoch < max_epoch and not stop:
             train_loss = 0.0
             train_acc = 0.0
@@ -214,3 +240,5 @@ class Trainer:
             os.makedirs(save_path, exist_ok=True)
             torch.save(model.state_dict(), os.path.join(save_path, "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(save_path, "{}.tar".format(epoch))))
+
+        return patch_size

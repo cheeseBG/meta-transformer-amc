@@ -6,6 +6,9 @@ import numpy as np
 from runner.utils import euclidean_dist, get_config
 from models.robustcnn import *
 from models.vit import *
+from models.protonet import *
+from models.lstm import *
+from models.daelstm import *
 
 
 class ProtoNet(nn.Module):
@@ -49,6 +52,10 @@ class ProtoNet(nn.Module):
         target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
+        
+        if self.config['fs_model'] in ['lstm', 'daelstm']:
+            x_support = x_support.squeeze().permute(0, 2, 1)
+            x_query = x_query.squeeze().permute(0, 2, 1)
 
         # encode dataloader dataframes of the support and the query set
         z_support = self.encoder.forward(x_support)
@@ -134,6 +141,10 @@ class ProtoNet(nn.Module):
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
 
+        if self.config['fs_model'] in ['lstm', 'daelstm']:
+            x_support = x_support.squeeze().permute(0, 2, 1)
+            x_query = x_query.squeeze().permute(0, 2, 1)
+
         # encode dataloader dataframes of the support and the query set
         z_support = self.encoder.forward(x_support)
         z_query = self.encoder.forward(x_query)
@@ -216,26 +227,8 @@ def load_protonet_conv(**kwargs):
     hid_dim = kwargs['hid_dim']
     z_dim = kwargs['z_dim']
 
-    def conv_block(in_channels, out_channels):
-        return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=(1, 3), padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-
-    encoder = nn.Sequential(
-        conv_block(x_dim[0], hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, hid_dim),
-        conv_block(hid_dim, z_dim),
-        Flatten()
-    )
-
+    encoder = ProtoNet_CNN(x_dim[0], hid_dim, z_dim)
+    
     return ProtoNet(encoder)
 
 
@@ -253,12 +246,13 @@ def load_protonet_robustcnn():
     return ProtoNet(encoder)
 
 
-def load_protonet_vit():
+def load_protonet_vit(patch_size):
     config = get_config('config.yaml')
 
     encoder = ViT(
         in_channels=config["in_channels"],
-        patch_size=tuple(config["patch_size"]),
+        #patch_size=tuple(config["patch_size"]),
+        patch_size=tuple(patch_size),
         embed_dim=config["embed_dim"],
         num_layers=config["num_layers"],
         num_heads=config["num_heads"],
@@ -268,3 +262,21 @@ def load_protonet_vit():
 
     )
     return ProtoNet(encoder)
+
+def load_protonet_lstm():
+    config = get_config('config.yaml')
+
+    encoder = LSTM(input_size=2,
+                   hidden_size=128,
+                   num_classes=config["num_classes"])
+
+    return ProtoNet(encoder)
+
+def load_protonet_daelstm():
+    config = get_config('config.yaml')
+
+    encoder = DAELSTM(input_shape=[1,2,1024],
+                   modulation_num=config["num_classes"])
+
+    return ProtoNet(encoder)
+

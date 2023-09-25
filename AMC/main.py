@@ -16,6 +16,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('lr_mode', type=str, default='fs', help='Select learning method: sv(supervised), fs(few-shot)')
     parser.add_argument('mode', type=str, default='all', help='train: only train, test: only test, all: train+test')
+    parser.add_argument('data', type=str, default='RML2018', help='Two type of dataset 1.RML2018, 2.RML2016')
 
     args = parser.parse_args()
 
@@ -35,15 +36,19 @@ if __name__ == '__main__':
 
     # Few shot learning
     elif args.lr_mode == 'fs':
+        if args.data not in ['RML2018', 'RML2016']:
+            print(f'{args.data} is not available!')
+            exit()
+
         if args.mode in ['train', 'all']:
             logger.info('Start few-shot learning')
             trainer = Trainer("config.yaml")
-            trainer.fs_train(now)
+            patch_size = trainer.fs_train(now, args.data)
 
         if args.mode in ['test', 'all']:
             tester = Tester("config.yaml")
             logger.info('Size Test')
-            tester.size_test(now)
+            tester.size_test(now, patch_size, args.data)
     else:
         logger.error('Wrong argument!')
 
