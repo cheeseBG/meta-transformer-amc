@@ -67,6 +67,7 @@ python main.py fs test
 - This figure shows the results of evaluating 5 random unseen modulations with few shots (1, 5, 10, 15).
 - Accuracy is the average value performed 100 times for each test.
 
+<!--
 ## Input size scalability evaluation
 <div align="center">
 <img src="./paper_figures/figures/size_cnn.png" width="400" height="250"/>
@@ -76,7 +77,7 @@ python main.py fs test
 - Evaluating the proposed model (**right figure**) using smaller input frames while it was trained with 2x1024 frames.
 - The left figure shows the limitations on the input size scalability of CNN-based models.  
 - Proposed model only leads to a slight performance degradation, with the minimum difference being approximately **±0.4%**.  
-
+-->
 
 ## Citation
 This paper is under review and additional evaluation results and citations will be updated later.
