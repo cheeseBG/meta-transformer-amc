@@ -20,6 +20,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    config_fname = f'config_{args.data}.yaml' 
+
     # For wandb group-name
     now = str(datetime.now())
 
@@ -27,11 +29,11 @@ if __name__ == '__main__':
     if args.lr_mode == 'sv':
         if args.mode in ['train', 'all']:
             logger.info('Start supervised learning')
-            trainer = Trainer("config.yaml")
+            trainer = Trainer(config_fname)
             trainer.train()
 
         if args.mode in ['test', 'all']:
-            tester = Tester("config.yaml", per_snr=True)
+            tester = Tester(config_fname, per_snr=True)
             tester.test()
 
     # Few shot learning
@@ -39,14 +41,16 @@ if __name__ == '__main__':
         if args.data not in ['RML2018', 'RML2016']:
             print(f'{args.data} is not available!')
             exit()
+        else:
+            print(f'Use {args.data} dataset...')
 
         if args.mode in ['train', 'all']:
             logger.info('Start few-shot learning')
-            trainer = Trainer("config.yaml")
+            trainer = Trainer(config_fname)
             patch_size = trainer.fs_train(now, args.data)
 
         if args.mode in ['test', 'all']:
-            tester = Tester("config.yaml")
+            tester = Tester(config_fname)
             logger.info('Size Test')
             tester.size_test(now, patch_size, args.data)
     else:

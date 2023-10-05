@@ -12,7 +12,7 @@ from models.daelstm import *
 
 
 class ProtoNet(nn.Module):
-    def __init__(self, encoder):
+    def __init__(self, encoder, config):
         """
         Args:
             encoder : CNN encoding the dataloader dataframes in sample
@@ -22,7 +22,7 @@ class ProtoNet(nn.Module):
         """
         super(ProtoNet, self).__init__()
         self.encoder = encoder.cuda(0)
-        self.config = get_config('config.yaml')
+        self.config = config
 
     def proto_train(self, sample):
         n_way = len(sample.keys())
@@ -232,7 +232,7 @@ def load_protonet_conv(**kwargs):
     return ProtoNet(encoder)
 
 
-def load_protonet_robustcnn():
+def load_protonet_robustcnn(config):
     encoder = nn.Sequential(
         ABlock(),
         BBlock(),
@@ -243,11 +243,10 @@ def load_protonet_robustcnn():
         Flatten()
     )
 
-    return ProtoNet(encoder)
+    return ProtoNet(encoder, config)
 
 
-def load_protonet_vit(patch_size):
-    config = get_config('config.yaml')
+def load_protonet_vit(patch_size, config):
 
     encoder = ViT(
         in_channels=config["in_channels"],
@@ -261,22 +260,20 @@ def load_protonet_vit(patch_size):
         in_size=config["in_size"]
 
     )
-    return ProtoNet(encoder)
+    return ProtoNet(encoder, config)
 
-def load_protonet_lstm():
-    config = get_config('config.yaml')
+def load_protonet_lstm(config):
 
     encoder = LSTM(input_size=2,
                    hidden_size=128,
                    num_classes=config["num_classes"])
 
-    return ProtoNet(encoder)
+    return ProtoNet(encoder, config)
 
-def load_protonet_daelstm():
-    config = get_config('config.yaml')
+def load_protonet_daelstm(config):
 
     encoder = DAELSTM(input_shape=[1,2,1024],
                    modulation_num=config["num_classes"])
 
-    return ProtoNet(encoder)
+    return ProtoNet(encoder, config)
 

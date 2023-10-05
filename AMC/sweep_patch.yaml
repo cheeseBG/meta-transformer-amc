@@ -13,7 +13,5 @@ method: grid
 parameters:
   patch_size:
     values:
-      - [2, 13]
-      - [2, 15]
-      - [2, 17]
+      - [2, 16]
 
