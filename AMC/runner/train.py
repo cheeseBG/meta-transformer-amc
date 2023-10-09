@@ -146,14 +146,14 @@ class Trainer:
         #     }
         # )
 
-        # with open('sweep_patch.yaml') as f:
-        #     sweep_config = yaml.load(f, Loader=yaml.FullLoader)
+        with open('sweep_patch.yaml') as f:
+             sweep_config = yaml.load(f, Loader=yaml.FullLoader)
         
-        # run = wandb.init(config=sweep_config)
-        # patch_size = wandb.config.patch_size
-        # w_config = wandb.config
+        run = wandb.init(config=sweep_config)
+        patch_size = wandb.config.patch_size
+        w_config = wandb.config
         # ###############################################################
-        patch_size = [2,16]
+        #patch_size = [2,16]
 
         model_name = self.config['fs_model']
         robust = False
@@ -238,7 +238,7 @@ class Trainer:
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
             scheduler.step()
 
-            # wandb.log({"acc": epoch_acc, "loss": epoch_loss})
+            wandb.log({"acc": epoch_acc, "loss": epoch_loss})
 
             save_path = os.path.join(self.config["save_path"], save_folder_name)
             os.makedirs(save_path, exist_ok=True)

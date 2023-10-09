@@ -10,7 +10,7 @@ batch_size: 128
 # training parameters
 cuda: True
 gpu_ids: [0]  # set the GPU ids to use, e.g. [0] or [1, 2]
-lr: 0.1 #0.01
+lr: 0.01
 lr_gamma: 0.8
 print_iter: 400
 
@@ -32,8 +32,8 @@ num_query: 10
 ##### Size test parameters
 ### train
 snr_range: [-10, 20]
-train_sample_size: 128
-test_sample_size: [16, 32, 64, 128]
+train_sample_size: 1024
+test_sample_size: [16, 32, 64, 128, 256, 512, 1024]
 save_folder_name: -10to20_128_v2
 train_proportion: 0.8
 data_divide: True  # divide train, test dataset
@@ -47,10 +47,10 @@ extension: False # if True, set patch_size[0] & in_size[0] -> 4
 trans_lr: 0.001
 
 in_channels: 1
-patch_size: [2, 16] #12
-embed_dim: 108 #36
+patch_size: [2, 16]
+embed_dim: 36
 num_layers: 8
 num_heads: 9
 mlp_dim: 32
-in_size: [2,128]
+in_size: [2,1024]
 num_classes: 24
