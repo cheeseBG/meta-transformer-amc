@@ -158,7 +158,7 @@ class FewShotDataset(data.Dataset):
         self.extension = extension
         self.snr_range = snr_range
         self.mode = mode
-        self.config = get_config('config.yaml')
+        self.config = get_config('config_RML2018.yaml')
         self.num_sample = int(4096 * self.config['train_proportion'])  # sample
         self.divide = divide
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
@@ -350,7 +350,7 @@ class FewShotDatasetForOnce(data.Dataset):
         self.root_path = root_path
         self.robust = robust
         self.snr_range = snr_range
-        self.config = get_config('config.yaml')
+        self.config = get_config('config_RML2018.yaml')
         self.sample_len = sample_len
 
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
@@ -442,14 +442,14 @@ class FewShotDataset2016(data.Dataset):
         self.extension = extension
         self.snr_range = snr_range
         self.mode = mode
-        self.config = get_config('config.yaml')
+        self.config = get_config('config_RML2016.yaml')
         self.num_sample = int(1000 * self.config['train_proportion'])  # sample
         self.divide = divide
         self.labels = list()
         if mode == 'train':
-            self.labels = [self.config['total_class16'][idx] for idx in self.config['train_class_indice16']]
+            self.labels = [self.config['total_class'][idx] for idx in self.config['train_class_indice']]
         elif mode == 'test':
-           self.labels = [self.config['total_class16'][idx] for idx in self.config['test_class_indice16']]
+           self.labels = [self.config['total_class'][idx] for idx in self.config['test_class_indice']]
         self.num_modulation = len(self.labels)
 
         with open(self.root_path, 'rb') as f:
@@ -462,39 +462,39 @@ class FewShotDataset2016(data.Dataset):
         #self.train_sample_len = self.config['train_sample_size']
         self.train_sample_len = 128
 
-        self.iq = None
-        self.onehot = None
+        self.iq = list()
+        self.onehot = list()
         # Sampling data in snr boundary
         for mod_idx, mod in enumerate(self.labels):
-            for snr in range(self.snr_range[0], self.snr_range[1], 2):
+            for snr in range(self.snr_range[0], self.snr_range[1]+2, 2):
                 onehot = np.zeros(self.num_modulation)
                 onehot[mod_idx] = 1
 
-                if self.iq != None:
+                if len(self.iq) == 0:
                     if self.divide is True:
                         if mode == 'train':
-                            self.iq.vstack((self.iq, self.data[(mod, snr)[:self.num_sample]]))
-                            onehot_arr = np.array([onehot for _ in range(self.num_sample)])
-                            self.onehot.vstack((self.onehot, onehot_arr))
-                        elif mode == 'test':
-                            self.iq.vstack((self.iq, self.data[(mod, snr)[self.num_sample:]]))
-                            onehot_arr = np.array([onehot for _ in range(1000-self.num_sample)])
-                            self.onehot.vstack((self.onehot, onehot_arr))
-                    else:
-                        self.iq.vstack((self.iq, self.data[(mod, snr)]))
-                        onehot_arr = np.array([onehot for _ in range(1000)])
-                        self.onehot.vstack((self.onehot, onehot_arr))
-                else:
-                    if self.divide is True:
-                        if mode == 'train':
-                            self.iq = self.data[(mod, snr)[:self.num_sample]]
+                            self.iq = self.data[(mod, snr)][:self.num_sample]
                             self.onehot = np.array([onehot for _ in range(self.num_sample)])
                         elif mode == 'test':
-                            self.iq = self.data[(mod, snr)[self.num_sample:]]
+                            self.iq = self.data[(mod, snr)][self.num_sample:]
                             self.onehot = np.array([onehot for _ in range(1000-self.num_sample)])
                     else:
                         self.iq = self.data[(mod, snr)]
                         self.onehot = np.array([onehot for _ in range(1000)])
+                else:
+                    if self.divide is True:
+                        if mode == 'train':
+                            self.iq = np.vstack((self.iq, self.data[(mod, snr)][:self.num_sample]))
+                            onehot_arr = np.array([onehot for _ in range(self.num_sample)])
+                            self.onehot = np.vstack((self.onehot, onehot_arr))
+                        elif mode == 'test':
+                            self.iq = np.vstack((self.iq, self.data[(mod, snr)][self.num_sample:]))
+                            onehot_arr = np.array([onehot for _ in range(1000-self.num_sample)])
+                            self.onehot = np.vstack((self.onehot, onehot_arr))
+                    else:
+                        self.iq = np.vstack((self.iq, self.data[(mod, snr)]))
+                        onehot_arr = np.array([onehot for _ in range(1000)])
+                        self.onehot = np.vstack((self.onehot, onehot_arr))
   
         # for extension
         if self.extension is True:
@@ -506,7 +506,8 @@ class FewShotDataset2016(data.Dataset):
             print("Done")
 
         # Extract indice of each labels
-        self.label_indices = {label: [i for i, x in enumerate(self.label_list) if x == label] for label in self.labels}
+        self.label_list = [int(argwhere(self.onehot[i] == 1)) for i in range(len(self.onehot))]
+        self.label_indices = {label: [i for i, x in enumerate(self.label_list) if x == label] for label in range(len(self.labels))}
 
         # few-shot variables
         self.num_support = num_support
@@ -521,7 +522,7 @@ class FewShotDataset2016(data.Dataset):
         sample = dict()
 
         if self.robust is True:
-            for label in self.labels:
+            for label in range(len(self.labels)):
                 sample[label] = dict()
                 label_indices = self.label_indices[label]
 
@@ -544,7 +545,7 @@ class FewShotDataset2016(data.Dataset):
                 sample[label]['query'] = query_set
 
         elif self.extension is True:
-            for label in self.labels:
+            for label in range(len(self.labels)):
                 sample[label] = dict()
                 label_indices = self.label_indices[label]
 
@@ -573,7 +574,7 @@ class FewShotDataset2016(data.Dataset):
                 sample[label]['query'] = query_set
 
         else:
-            for label in self.labels:
+            for label in range(len(self.labels)):
                 sample[label] = dict()
                 label_indices = self.label_indices[label]
 

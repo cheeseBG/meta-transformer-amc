@@ -14,6 +14,8 @@ from models.proto import *
 
 torch.manual_seed(50)
 
+torch.manual_seed(50)
+
 class Trainer:
     def __init__(self, config, model_path=None):
         self.config = get_config(config)
@@ -147,12 +149,13 @@ class Trainer:
         # )
 
         with open('sweep_patch.yaml') as f:
-            sweep_config = yaml.load(f, Loader=yaml.FullLoader)
+             sweep_config = yaml.load(f, Loader=yaml.FullLoader)
         
         run = wandb.init(config=sweep_config)
         patch_size = wandb.config.patch_size
         w_config = wandb.config
         # ###############################################################
+        #patch_size = [2,16]
 
         model_name = self.config['fs_model']
         robust = False
@@ -175,14 +178,14 @@ class Trainer:
                                         divide=self.config['data_divide'],  # divide by train proportion
                                         sample_len=self.config["train_sample_size"])
         elif data_name == 'RML2016':
-            train_data = FewShotDataset2016(self.config["dataset_path_2016"],
+            train_data = FewShotDataset2016(self.config["dataset_path"],
                                         num_support=self.config["num_support"],
                                         num_query=self.config["num_query"],
                                         robust=robust,
                                         extension=extension,
                                         snr_range=self.config['snr_range'],
                                         divide=self.config['data_divide'],  # divide by train proportion
-                                        sample_len=self.config["train_sample_size_2016"])
+                                        sample_len=self.config["train_sample_size"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
@@ -191,27 +194,34 @@ class Trainer:
                 x_dim=(1, 512, 256),
                 hid_dim=32,
                 z_dim=24,
+                config=self.config
             )
             optimizer = Adam(model.parameters(), lr=0.001)
             scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
 
         elif model_name == 'robustcnn':
-            model = load_protonet_robustcnn()
+            model = load_protonet_robustcnn(self.config)
             optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
 
         elif model_name == 'vit':
-            model = load_protonet_vit(patch_size)
+            model = load_protonet_vit(patch_size, self.config)
             optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
         
+<<<<<<< HEAD
         elif model_name == 'resnet':
             model = load_protonet_resnet()
             optimizer = Adam(model.parameters(), lr=self.config['lr'])
+=======
+        elif model_name == 'lstm':
+            model = load_protonet_lstm(self.config)
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
+>>>>>>> 1c587e97880f0ff0e45f00d46d81eb283b5d84c7
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
         elif model_name == 'daelstm':
-            model = load_protonet_daelstm()
+            model = load_protonet_daelstm(self.config)
             optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 

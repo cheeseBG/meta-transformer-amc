@@ -110,6 +110,7 @@ class Tester:
         plt.yticks(fontsize=yticks_fontsize)
         plt.legend(loc='lower right', framealpha=1, fontsize=legend_fontsize)
         plt.show()
+        
 
     def size_test(self, now, patch_size, data_name):
         print("Cuda: ", torch.cuda.is_available())
@@ -117,6 +118,7 @@ class Tester:
 
         n_way = len(self.config['test_class_indice'])
         snr_range = range(self.config["test_snr_range"][0], self.config["test_snr_range"][1] + 1, 2)
+        
 
         load_folder_name = self.config['save_folder_name']
         sample_size_list = self.config['test_sample_size']
@@ -135,17 +137,18 @@ class Tester:
                     x_dim=(1, 512, 256),
                     hid_dim=32,
                     z_dim=24,
+                    config=self.config
              )
         elif model_name == 'robustcnn':
-            model = load_protonet_robustcnn()
+            model = load_protonet_robustcnn(self.config)
 
         elif model_name == 'vit':
-            model = load_protonet_vit(patch_size)
+            model = load_protonet_vit(patch_size, self.config)
 
         elif model_name == 'lstm':
-            model = load_protonet_lstm()
+            model = load_protonet_lstm(self.config)
         elif model_name == 'daelstm':
-            model = load_protonet_daelstm()
+            model = load_protonet_daelstm(self.config)
         
 
         m_path = os.path.join(self.model_path, load_folder_name+str(patch_size), self.config['load_model_name'])
@@ -168,7 +171,7 @@ class Tester:
                                                 divide=self.config['data_divide'],  # divide by train proportion
                                                 sample_len=sample_size)
                 elif data_name == 'RML2016':
-                    test_data = FewShotDataset2016(self.config["test_dataset_path_2016"],
+                    test_data = FewShotDataset2016(self.config["test_dataset_path"],
                                                 num_support=self.config["num_support"],
                                                 num_query=self.config["num_query"],
                                                 robust=robust,
