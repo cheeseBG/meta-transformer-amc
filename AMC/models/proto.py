@@ -9,6 +9,7 @@ from models.vit import *
 from models.protonet import *
 from models.lstm import *
 from models.daelstm import *
+from models.resnet import *
 
 
 class ProtoNet(nn.Module):
@@ -47,6 +48,10 @@ class ProtoNet(nn.Module):
 
         x_support = torch.from_numpy(x_support).cuda(0)
         x_query = torch.from_numpy(x_query).cuda(0)
+
+        if self.config['fs_model'] == 'resnet':
+            x_support = x_support.reshape((-1,2,1,x_support.shape[-1]))
+            x_query = x_query.reshape((-1,2,1,x_query.shape[-1]))
 
         # target indices are 0 ... n_way-1
         target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
@@ -277,6 +282,13 @@ def load_protonet_daelstm():
 
     encoder = DAELSTM(input_shape=[1,2,1024],
                    modulation_num=config["num_classes"])
+
+    return ProtoNet(encoder)
+
+def load_protonet_resnet():
+    config = get_config('config.yaml')
+
+    encoder = ResNetStack()
 
     return ProtoNet(encoder)
 

@@ -1,11 +1,11 @@
 # data parameters
 dataset_path: /home/inclab2/Gitrepo/meta-transformer-amc/amc_dataset/RML2018
 dataset_path_2016: /home/inclab2/Gitrepo/meta-transformer-amc/amc_dataset/RML2016/RML2016.10a_dict.pkl
-save_path: checkpoint/paper/size_2016/vit
+save_path: checkpoint/paper/size/resnet
 epoch: 50
 
 # supervised learning parameters
-model_name: robustcnn
+model_name: resnet
 batch_size: 128
 
 # training parameters
@@ -18,7 +18,7 @@ print_iter: 400
 # test parameters
 test_dataset_path: /home/inclab2/Gitrepo/meta-transformer-amc/amc_dataset/RML2018
 test_dataset_path_2016: /home/inclab2/Gitrepo/meta-transformer-amc/amc_dataset/RML2016/RML2016.10a_dict.pkl
-load_test_path: checkpoint/paper/size_2016/vit
+load_test_path: checkpoint/paper/size/resnet/-10to20/49.tar
 show_conf_matrix: False
 
 # AMC dataset configuration
@@ -32,7 +32,7 @@ train_class_indices16: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 test_class_indices16: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 # few-shot learning parameters
-fs_model: vit # robustcnn, rewis, vit, lstm, daelstm
+fs_model: resnet # robustcnn, rewis, vit, lstm, daelstm, resnet
 num_support: 5
 num_query: 10
 
@@ -41,7 +41,7 @@ num_query: 10
 snr_range: [-10, 20]
 train_sample_size: 1024
 train_sample_size_2016: 128
-test_sample_size: [1024] #[16, 32, 64, 128, 256, 512, 1024]
+test_sample_size: [64, 128, 256, 512, 1024]
 save_folder_name: -10to20
 train_proportion: 0.8
 data_divide: True  # divide train, test dataset
@@ -55,21 +55,21 @@ extension: False # if True, set patch_size[0] & in_size[0] -> 4
 trans_lr: 0.001
 
 # RML 2018
+in_channels: 1
+patch_size: [2, 16] #12
+embed_dim: 36  #126
+num_layers: 8
+num_heads: 9
+mlp_dim: 32
+in_size: [2,1024]
+num_classes: 24
+
+# RML 2016
 # in_channels: 1
 # patch_size: [2, 16] #12
 # embed_dim: 36
 # num_layers: 8
 # num_heads: 9
 # mlp_dim: 32
-# in_size: [2,1024]
-# num_classes: 24
-
-# RML 2016
-in_channels: 1
-patch_size: [2, 16] #12
-embed_dim: 36
-num_layers: 8
-num_heads: 9
-mlp_dim: 32
-in_size: [2,128]
-num_classes: 11
+# in_size: [2,128]
+# num_classes: 11

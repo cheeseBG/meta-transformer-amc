@@ -43,3 +43,38 @@ class DAELSTM(nn.Module):
         x = self.clf_dense_3(x)
         
         return x
+
+if __name__ == '__main__':
+    import torch
+    import time
+    from pytorch_model_summary import summary as summary
+    from thop import profile
+
+    input = torch.randn(1, 1024, 2).to("cuda")
+    model = DAELSTM(input_shape=[1,2,1024],
+                   modulation_num=11).to("cuda")
+    print(summary(model, input))
+
+    input = torch.randn(2, 1024, 2).cuda()
+    start_time = time.time()
+    outputs = model(input)
+    end_time = time.time()
+
+    elapsed_time = end_time - start_time
+    print(
+        "Elapsed time: %.3f" % (elapsed_time)
+    )
+
+    macs, params = profile(model, inputs=(input.to(device="cuda"),))
+    print(
+        "Param: %.2fM | FLOPs: %.3fG" % (params / (1000 ** 2), macs / (1000 ** 3))
+    )
+    total_params = sum(p.numel() for p in model.parameters())
+
+    # 각 파라미터의 데이터 타입에 따른 크기 계산
+    total_size_bytes = total_params * 4  # 32비트(float32)의 경우 4바이트 사용
+
+    # 바이트를 메가바이트로 변환
+    total_size_megabytes = total_size_bytes / (1024 * 1024)
+
+    print(f"모델 예상 총 크기: {total_size_megabytes:.2f} MB")

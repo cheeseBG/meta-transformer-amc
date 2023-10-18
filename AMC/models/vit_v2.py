@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchsummary import summary
-from thop import profile
-import time
 
 
 class PatchEmbedding(nn.Module):
@@ -68,7 +67,7 @@ class ViTBlock(nn.Module):
         x = x + self.mlp(self.norm2(x))
         return x
 
-class ViT(nn.Module):
+class ViT_v2(nn.Module):
     def __init__(self, in_channels, embed_dim, num_layers, num_heads, mlp_dim, num_classes, patch_size, in_size):
         super().__init__()
         self.patch_embed = PatchEmbedding(in_channels, embed_dim, patch_size)
@@ -81,7 +80,20 @@ class ViT(nn.Module):
         )
 
         self.norm = nn.LayerNorm(embed_dim)
-        self.fc = nn.Linear(embed_dim, num_classes)
+
+        self.clf_dense_1 = nn.Linear(embed_dim, 64)
+        self.bn_1 = nn.BatchNorm1d(64)
+        self.clf_drop_1 = nn.Dropout(p=0)
+        
+        self.clf_dense_2 = nn.Linear(64, 32)
+        self.bn_2 = nn.BatchNorm1d(32)
+        self.clf_drop_2 = nn.Dropout(p=0)
+
+        self.clf_dense_3 = nn.Linear(32, 16)
+        self.bn_3 = nn.BatchNorm1d(16)
+        self.clf_drop_3 = nn.Dropout(p=0)
+        
+        self.clf_dense_4 = nn.Linear(16, num_classes)
 
     def forward(self, x):
         B, _, _, _ = x.shape
@@ -96,38 +108,13 @@ class ViT(nn.Module):
         x = self.blocks(x)
 
         x = self.norm(x[:, 0])
-        x = self.fc(x)
+    
+        x = F.relu(self.clf_dense_1(x))
+        x = self.clf_drop_1(self.bn_1(x))
+        x = F.relu(self.clf_dense_2(x))
+        x = self.clf_drop_2(self.bn_2(x))
+        x = F.relu(self.clf_dense_3(x))
+        x = self.clf_drop_3(self.bn_3(x))
+        x = self.clf_dense_4(x)
 
         return x
-
-
-if __name__ == '__main__':
-    model = ViT(
-        in_channels=1,
-        patch_size=(2, 16),
-        embed_dim=36,
-        num_layers=8,
-        num_heads=9,
-        mlp_dim=32,
-        num_classes=24,
-        in_size=[2, 1024]
-    ).to("cuda")
-    print(summary(model, (1, 2, 1024)))
-
-    input = torch.randn(1, 1, 2, 1024).cuda()
-
-    start_time = time.time()
-    outputs = model(input)
-    end_time = time.time()
-
-    elapsed_time = end_time - start_time
-    print(
-        "Elapsed time: %.3f" % (elapsed_time)
-    )
-
-    input = torch.randn(1, 1, 2, 1024)
-
-    macs, params = profile(model, inputs=(torch.Tensor(input).to(device="cuda"),))
-    print(
-        "Param: %.2fM | FLOPs: %.3fG" % (params / (1000 ** 2), macs / (1000 ** 3))
-    )

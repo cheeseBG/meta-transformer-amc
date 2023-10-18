@@ -134,6 +134,11 @@ class AMCTestDataset(data.Dataset):
         label = int(argwhere(self.onehot[item] == 1))
         x = self.iq[item].transpose()[:, :self.sample_len]
 
+        # self duplication
+        if self.sample_len != 1024:
+            num_dup = (1024 // self.sample_len)
+            x = np.array(np.concatenate([self.iq[item].transpose()[:, :self.sample_len] for _ in range(num_dup)], axis=1))
+
         if self.robust is True:
             revers = np.flip(x.copy(), axis=1)
             x = np.concatenate((x, revers), axis=0)

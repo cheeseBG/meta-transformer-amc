@@ -148,7 +148,6 @@ class Tester:
             model = load_protonet_daelstm()
         
 
-
         m_path = os.path.join(self.model_path, load_folder_name+str(patch_size), self.config['load_model_name'])
         model.load_state_dict(torch.load(m_path))
 
@@ -165,7 +164,7 @@ class Tester:
                                                 robust=robust,
                                                 extension=extension,
                                                 mode='test',
-                                                snr_range=self.config['snr_range'],
+                                                snr_range=[snr,snr],
                                                 divide=self.config['data_divide'],  # divide by train proportion
                                                 sample_len=sample_size)
                 elif data_name == 'RML2016':
@@ -175,7 +174,7 @@ class Tester:
                                                 robust=robust,
                                                 extension=extension,
                                                 mode='test',
-                                                snr_range=self.config['snr_range'],
+                                                snr_range=[snr,snr],
                                                 divide=self.config['data_divide'],  # divide by train proportion
                                                 sample_len=sample_size)
         

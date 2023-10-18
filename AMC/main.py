@@ -48,7 +48,7 @@ if __name__ == '__main__':
         if args.mode in ['test', 'all']:
             tester = Tester("config.yaml")
             logger.info('Size Test')
-            tester.size_test(now, patch_size, args.data)
+            tester.size_test(now, [2,16], args.data)
     else:
         logger.error('Wrong argument!')
 

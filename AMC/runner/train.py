@@ -5,12 +5,14 @@ import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
 import wandb
+import yaml
 from datetime import datetime
 from torch.optim import lr_scheduler, Adam
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTrainDataset, FewShotDataset,FewShotDataset2016
-from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit, load_protonet_lstm, load_protonet_daelstm
-import yaml
+from models.proto import *
+
+torch.manual_seed(50)
 
 class Trainer:
     def __init__(self, config, model_path=None):
@@ -203,11 +205,11 @@ class Trainer:
             optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
         
-        elif model_name == 'lstm':
-            model = load_protonet_lstm()
-            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
+        elif model_name == 'resnet':
+            model = load_protonet_resnet()
+            optimizer = Adam(model.parameters(), lr=self.config['lr'])
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
-        
+
         elif model_name == 'daelstm':
             model = load_protonet_daelstm()
             optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
