@@ -1,6 +1,7 @@
 import yaml
 import torch
 import logging
+import wandb
 from models.robustcnn import RobustCNN
 from models.resnet import ResNetStack
 
@@ -45,6 +46,50 @@ def cosine_similarity(x, y):
     m = y.size(0)
     d = x.size(1)
     assert d == y.size(1)
+
+def wandb_set(on_wandb=False):
+    ################## Wandb setting #############################
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="AMC_few-shot",
+        # group=self.config['fs_model'],
+        # group="Test Sweep",
+        group="extension_test",
+        name=now,
+        notes=f'num_support:{self.config["num_support"]},'
+            f'num_query:{self.config["num_query"]},'
+            f'robust:{True},'
+            f'snr_range:{self.config["snr_range"]},'
+            f'train_class_indice:{self.config["train_class_indice"]},'
+            f'test_class_indice:{self.config["test_class_indice"]}'
+            f'train_sample_size:{self.config["train_sample_size"]},'
+            f'test_sample_size:{self.config["test_sample_size"]}',
+
+        # track hyperparameters and run metadata
+        config={
+            # "learning_rate": self.config["lr"],
+            "architecture": self.config['fs_model'],
+            "dataset": "RML2018",
+            # "epochs": self.config["epoch"],
+
+            # "learning_rate": 0.01,
+            # "momentum": 0.9,
+            # "batch_size": 128,
+            # "epochs": 30,
+            # "scheduler_step_size": 10,
+            # "scheduler_gamma":0.1
+
+        }
+    )
+
+    with open('sweep_patch.yaml') as f:
+        sweep_config = yaml.load(f, Loader=yaml.FullLoader)
+        
+    run = wandb.init(config=sweep_config)
+    patch_size = wandb.config.patch_size
+    w_config = wandb.config
+
+    return patch_size
 
 
 class CustomFormatter(logging.Formatter):
