@@ -27,6 +27,11 @@ total_class: ['OOK', '4ASK', '8ASK', 'BPSK', 'QPSK', '8PSK', '16PSK', '32PSK', '
 train_class_indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,22, 23]
 test_class_indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,22, 23]
 
+# AMC RML2016.10A dataset configuration
+total_class16: ['AM-SSB', 'CPFSK', 'QPSK', 'GFSK', 'PAM4', 'QAM16', 'WBFM', '8PSK', 'QAM64', 'AM-DSB', 'BPSK']
+train_class_indices16: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+test_class_indices16: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
 # few-shot learning parameters
 fs_model: vit # robustcnn, protonet, vit
 num_support: 10
