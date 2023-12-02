@@ -3,6 +3,7 @@ import torch
 import logging
 from models.robustcnn import RobustCNN
 from models.resnet import ResNetStack
+from models.daelstm import DAELSTM
 
 
 # get configs
@@ -17,6 +18,9 @@ def model_selection(model_name):
         return RobustCNN(n_class=24, softmax=False)
     elif model_name == 'resnet':
         return ResNetStack()
+    elif model_name == 'daelstm':
+        return DAELSTM(input_shape=[1,2,1024],
+                   modulation_num=24)
     else:
         raise NotImplementedError(model_name)
 

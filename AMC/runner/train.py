@@ -31,6 +31,8 @@ class Trainer:
             self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
         elif self.config["model_name"] == 'resnet':
             self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
+        elif self.config["model_name"] == 'daelstm':
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
 
         # loss
         self.loss = nn.CrossEntropyLoss()
@@ -104,7 +106,7 @@ class Trainer:
             print('epoch train loss: {:.8f}'.format(epoch_loss))
             print(f'Accuracy: : {correct / total}')
 
-            self.scheduler.step()
+            #self.scheduler.step()
 
             os.makedirs(self.config["save_path"], exist_ok=True)
             torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
@@ -209,15 +211,10 @@ class Trainer:
             optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
         
-<<<<<<< HEAD
         elif model_name == 'resnet':
             model = load_protonet_resnet()
             optimizer = Adam(model.parameters(), lr=self.config['lr'])
-=======
-        elif model_name == 'lstm':
-            model = load_protonet_lstm(self.config)
-            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
->>>>>>> 1c587e97880f0ff0e45f00d46d81eb283b5d84c7
+
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
         elif model_name == 'daelstm':
