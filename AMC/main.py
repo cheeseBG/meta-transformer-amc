@@ -25,6 +25,13 @@ if __name__ == '__main__':
     # For wandb group-name
     now = str(datetime.now())
 
+    # Check dataset availability
+    if args.data not in ['RML2018', 'RML2016']:
+        print(f'{args.data} is not available!')
+        exit()
+    else:
+        print(f'Use {args.data} dataset...')
+
     # Supervised learning
     if args.lr_mode == 'sv':
         if args.mode in ['train', 'all']:
@@ -38,11 +45,6 @@ if __name__ == '__main__':
 
     # Few shot learning
     elif args.lr_mode == 'fs':
-        if args.data not in ['RML2018', 'RML2016']:
-            print(f'{args.data} is not available!')
-            exit()
-        else:
-            print(f'Use {args.data} dataset...')
 
         if args.mode in ['train', 'all']:
             logger.info('Start few-shot learning')
