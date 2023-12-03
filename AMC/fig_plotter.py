@@ -131,8 +131,8 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     plotter = Plotter(args.test)
-    #plotter.model_compare()
+    plotter.model_compare()
     #plotter.sample_size()
-    plotter.sample_size_compare()
+    #plotter.sample_size_compare()
     #plotter.patch_size()
 
