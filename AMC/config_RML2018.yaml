@@ -1,22 +1,23 @@
 # data parameters
 dataset_path: ../amc_dataset/RML2018
-save_path: checkpoint/paper/size/vit
-epoch: 100
+save_path: checkpoint/paper/learning/daelstm_sv__nosch
+epoch: 150
 
 # supervised learning parameters
-model_name: resnet
+model_name: daelstm
 batch_size: 128
 
 # training parameters
 cuda: True
 gpu_ids: [0]  # set the GPU ids to use, e.g. [0] or [1, 2]
-lr: 0.01
+
+lr: 0.001 #0.01
 lr_gamma: 0.8
 print_iter: 400
 
 # test parameters
 test_dataset_path: ../amc_dataset/RML2018
-load_test_path: checkpoint/paper/size/vit
+load_test_path: checkpoint/paper/learning/daelstm_sv_nosch/149.tar
 show_conf_matrix: False
 
 # AMC dataset configuration
@@ -31,16 +32,17 @@ num_query: 10
 
 ##### Size test parameters
 ### train
+
 snr_range: [-10, 20]
 train_sample_size: 1024
-test_sample_size: [64, 128, 256, 512, 1024]
-save_folder_name: -10to20
-train_proportion: 0.8
+test_sample_size: [1024]
+save_folder_name: -10to20_128
+train_proportion: 0.75
 data_divide: True  # divide train, test dataset
 
 ### test
 test_snr_range: [-20,20]
-load_model_name: 49.tar
+load_model_name: 149.tar
 
 # transformer parameters
 extension: False # if True, set patch_size[0] & in_size[0] -> 4

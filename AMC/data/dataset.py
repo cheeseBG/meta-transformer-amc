@@ -21,7 +21,7 @@ class AMCTrainDataset(data.Dataset):
         self.snr_range = snr_range
         self.transforms = AMCTransform()
         self.robust = robust
-        self.config = get_config('config.yaml')
+        self.config = get_config('config_RML2018.yaml')
 
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
@@ -74,7 +74,10 @@ class AMCTrainDataset(data.Dataset):
 
             sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
         else:
-            x = np.expand_dims(x, axis=1)
+            if self.config['model_name'] == 'daelstm':
+                x = x.reshape((1024, 2))
+            else:
+                x = np.expand_dims(x, axis=1)
             sample = {"data": x, "label": label, "snr": self.snr[item]}
 
         return sample
@@ -88,7 +91,7 @@ class AMCTestDataset(data.Dataset):
         self.snr_range = snr_range
         self.transforms = AMCTransform()
         self.robust = robust
-        self.config = get_config('config.yaml')
+        self.config = get_config('config_RML2018.yaml')
 
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
@@ -145,7 +148,10 @@ class AMCTestDataset(data.Dataset):
 
             sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
         else:
-            x = np.expand_dims(x, axis=1)
+            if self.config['model_name'] == 'daelstm':
+                x = x.reshape((1024, 2))
+            else:
+                x = np.expand_dims(x, axis=1)
             sample = {"data": x, "label": label, "snr": self.snr[item]}
 
         return sample
