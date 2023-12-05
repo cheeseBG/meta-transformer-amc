@@ -3,7 +3,6 @@ command:
   - main.py
   - fs
   - test
-  - RML2018
 
 project: AMC_few-shot
 name: patch_size_test

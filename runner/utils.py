@@ -5,6 +5,7 @@ import numpy as np
 import random
 from models.robustcnn import RobustCNN
 from models.resnet import ResNetStack
+from models.daelstm import DAELSTM
 
 
 # get configs
