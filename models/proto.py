@@ -7,10 +7,12 @@ from runner.utils import euclidean_dist, get_config
 from models.robustcnn import *
 from models.vit import *
 from models.protonet import *
+from models.daelstm import *
+from models.resnet import *
 
 
 class ProtoNet(nn.Module):
-    def __init__(self, encoder):
+    def __init__(self, encoder, config):
         """
         Args:
             encoder : CNN encoding the dataloader dataframes in sample
@@ -20,7 +22,7 @@ class ProtoNet(nn.Module):
         """
         super(ProtoNet, self).__init__()
         self.encoder = encoder.cuda(0)
-        self.config = get_config('config.yaml')
+        self.config = config
 
     def proto_train(self, sample):
         n_way = len(sample.keys())
@@ -45,11 +47,19 @@ class ProtoNet(nn.Module):
 
         x_support = torch.from_numpy(x_support).cuda(0)
         x_query = torch.from_numpy(x_query).cuda(0)
-        
+
+        if self.config['fs_model'] == 'resnet':
+            x_support = x_support.reshape((-1,2,1,x_support.shape[-1]))
+            x_query = x_query.reshape((-1,2,1,x_query.shape[-1]))
+
         # target indices are 0 ... n_way-1
         target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
+        
+        if self.config['fs_model'] in ['lstm', 'daelstm']:
+            x_support = x_support.squeeze().permute(0, 2, 1)
+            x_query = x_query.squeeze().permute(0, 2, 1)
 
         # encode dataloader dataframes of the support and the query set
         z_support = self.encoder.forward(x_support)
@@ -135,6 +145,10 @@ class ProtoNet(nn.Module):
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
 
+        if self.config['fs_model'] in ['lstm', 'daelstm']:
+            x_support = x_support.squeeze().permute(0, 2, 1)
+            x_query = x_query.squeeze().permute(0, 2, 1)
+
         # encode dataloader dataframes of the support and the query set
         z_support = self.encoder.forward(x_support)
         z_query = self.encoder.forward(x_query)
@@ -203,7 +217,6 @@ class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)
 
-
 def load_protonet_conv(**kwargs):
     """
     Loads the prototypical network model
@@ -219,11 +232,11 @@ def load_protonet_conv(**kwargs):
     z_dim = kwargs['z_dim']
 
     encoder = ProtoNet_CNN(x_dim[0], hid_dim, z_dim)
-
+    
     return ProtoNet(encoder)
 
 
-def load_protonet_robustcnn():
+def load_protonet_robustcnn(config):
     encoder = nn.Sequential(
         ABlock(),
         BBlock(),
@@ -234,15 +247,15 @@ def load_protonet_robustcnn():
         Flatten()
     )
 
-    return ProtoNet(encoder)
+    return ProtoNet(encoder, config)
 
 
-def load_protonet_vit():
-    config = get_config('config.yaml')
+def load_protonet_vit(patch_size, config):
 
     encoder = ViT(
         in_channels=config["in_channels"],
-        patch_size=tuple(config["patch_size"]),
+        #patch_size=tuple(config["patch_size"]),
+        patch_size=tuple(patch_size),
         embed_dim=config["embed_dim"],
         num_layers=config["num_layers"],
         num_heads=config["num_heads"],
@@ -251,4 +264,27 @@ def load_protonet_vit():
         in_size=config["in_size"]
 
     )
+    return ProtoNet(encoder, config)
+
+def load_protonet_lstm(config):
+
+    encoder = LSTM(input_size=2,
+                   hidden_size=128,
+                   num_classes=config["num_classes"])
+
+    return ProtoNet(encoder, config)
+
+def load_protonet_daelstm(config):
+
+    encoder = DAELSTM(input_shape=[1,2,1024],
+                   modulation_num=config["num_classes"])
+
+    return ProtoNet(encoder, config)
+
+def load_protonet_resnet():
+    config = get_config('config.yaml')
+
+    encoder = ResNetStack()
+
     return ProtoNet(encoder)
+
