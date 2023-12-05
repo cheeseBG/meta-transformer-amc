@@ -247,9 +247,8 @@ class FewShotDataset(data.Dataset):
                 # support set
                 support_indices = random.sample(label_indices, self.num_support)
                 support_set = None
-                support_set = [np.concatenate((self.iq[i].transpose()[:, :self.train_sample_len],
-                                            self.exts[i][:, :self.train_sample_len]), axis=0)
-                            for i in support_indices]
+                support_set = [np.concatenate((self.iq[i].transpose(), np.flip(self.iq[i].transpose(), axis=1)), axis=0)
+                               for i in support_indices]
                 sample[label]['support'] = support_set
 
                 # query set

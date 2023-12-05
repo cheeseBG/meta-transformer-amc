@@ -117,7 +117,7 @@ class Trainer:
 
         model_name = self.config['fs_model']
         robust = False
-        if model_name != 'vit':
+        if model_name == 'robustcnn':
             robust = True
 
         train_data = FewShotDataset(self.config["dataset_path"],
