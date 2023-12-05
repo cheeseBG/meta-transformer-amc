@@ -18,7 +18,7 @@ print_iter: 400
 
 # test parameters
 test_dataset_path: ./amc_dataset/RML2018
-load_test_path: ./checkpoint/learning/vit/-10to20/49.tar
+load_test_path: ./checkpoint/learning/vit/-10to20
 show_conf_matrix: False
 
 # AMC dataset configuration
@@ -40,7 +40,6 @@ num_query: 10
 snr_range: [-10, 20]
 train_sample_size: 1024
 test_sample_size: [1024] # [64, 128, 256, 512, 1024]
-save_folder_name: -10to20_1024
 train_proportion: 0.75
 data_divide: True  # divide train, test dataset
 

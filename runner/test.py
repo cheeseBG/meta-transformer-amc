@@ -115,8 +115,6 @@ class Tester:
         n_way = len(self.config['test_class_indices'])
         snr_range = range(self.config["test_snr_range"][0], self.config["test_snr_range"][1] + 1, 2)
         
-
-        load_folder_name = self.config['save_folder_name']
         sample_size_list = self.config['test_sample_size']
 
         acc_per_size = []
@@ -144,7 +142,7 @@ class Tester:
         elif model_name == 'daelstm':
             model = load_protonet_daelstm(self.config)
         
-        m_path = os.path.join(self.model_path, load_folder_name+str(patch_size), self.config['load_model_name'])
+        m_path = os.path.join(self.model_path, self.config['load_model_name'])
         model.load_state_dict(torch.load(m_path))
 
         for sample_size in sample_size_list:
