@@ -10,7 +10,7 @@ import pandas as pd
 from runner.utils import get_config, model_selection
 from data.dataset import AMCTestDataset, FewShotDataset
 from plot.conf_matrix import plot_confusion_matrix
-
+from models.proto import *
 
 class Tester:
     def __init__(self, config, model_path=None, save_path=None, per_snr=False):
