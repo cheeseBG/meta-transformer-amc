@@ -20,8 +20,10 @@ class Trainer:
         self.device_ids = self.config['gpu_ids']
         self.batch_size = self.model_params["batch_size"]
         self.model_path = model_path
-
         self.net = model_selection(self.config["model"])
+
+        # If variable 'robust' is True, extend frame length to 4 x 1024
+        self.robust = True if self.config['model'] == 'robustcnn' else False 
 
         if self.config["model"] == 'robustcnn':
             self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.model_params['lr'], momentum=0.9)
@@ -41,19 +43,12 @@ class Trainer:
     def train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+        print(f"Model: {self.config['model']}")
 
         save_path = os.path.join(self.config["save_path"], self.config['model'])
         os.makedirs(save_path, exist_ok=True)
 
-        model_name = self.config['model']
-        print(f'Model: {model_name}')
-
-        # If variable 'robust' is True, extend frame length to 4 x 1024
-        robust = False 
-        if model_name == 'robustcnn':
-            robust = True
-
-        train_data = AMCTrainDataset(self.config, robust=robust)
+        train_data = AMCTrainDataset(self.config, robust=self.robust)
         train_dataset_size = len(train_data)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
@@ -113,18 +108,14 @@ class Trainer:
     def fs_train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+        print(f"Model: {self.config['model']}")
 
-        patch_size = [2, 16]
-
-        model_name = self.config['model']
-        robust = False
-        if model_name == 'robustcnn':
-            robust = True
+        patch_size = self.model_params['patch_size'] if self.config['model'] in ['vit_main', 'vit_sub'] else None
 
         train_data = FewShotDataset(self.config["dataset_path"],
                                         num_support=self.config["num_support"],
                                         num_query=self.config["num_query"],
-                                        robust=robust,
+                                        robust=self.robust,
                                         snr_range=self.config['snr_range'],
                                         divide=self.config['data_divide'],  # divide by train proportion
                                         sample_len=self.config["train_sample_size"])
