@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
-import wandb
 import yaml
 from datetime import datetime
 from torch.optim import lr_scheduler, Adam
@@ -14,56 +13,55 @@ from models.proto import *
 
 
 class Trainer:
-    def __init__(self, config, model_path=None):
+    def __init__(self, config, model_config, model_path=None):
         self.config = get_config(config)
+        self.model_params = get_config(model_config)[self.config['model']]
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
-        self.batch_size = self.config["batch_size"]
+        self.batch_size = self.model_params["batch_size"]
         self.model_path = model_path
 
-        self.net = model_selection(self.config["model_name"])
+        self.net = model_selection(self.config["model"])
 
-         # optimizer
-        if self.config["model_name"] == 'robustcnn':
-            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
-        elif self.config["model_name"] == 'resnet':
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
-        elif self.config["model_name"] == 'daelstm':
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
+        if self.config["model"] == 'robustcnn':
+            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.model_params['lr'], momentum=0.9)
+        else:
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.model_params['lr'])
 
-        # loss
         self.loss = nn.CrossEntropyLoss()
-
-        # scheduler
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.9)
+        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=self.model_params['lr_gamma'])
 
         if self.use_cuda:
             self.net.to(self.device_ids[0])
             self.loss.to(self.device_ids[0])
 
+    '''
+    Supervised Learning
+    '''
     def train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        model_name = self.config['model_name']
-        print(f'Model Name: {model_name}')
+        save_path = os.path.join(self.config["save_path"], self.config['model'])
+        os.makedirs(save_path, exist_ok=True)
 
-        robust = False
+        model_name = self.config['model']
+        print(f'Model: {model_name}')
+
+        # If variable 'robust' is True, extend frame length to 4 x 1024
+        robust = False 
         if model_name == 'robustcnn':
             robust = True
 
-        train_data = AMCTrainDataset(self.config["dataset_path"],
-                                     robust=robust,
-                                     snr_range=self.config["snr_range"],
-                                     sample_len=self.config["train_sample_size"])
+        train_data = AMCTrainDataset(self.config, robust=robust)
         train_dataset_size = len(train_data)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
         if self.model_path is not None:
             self.net.load_state_dict(torch.load(self.model_path))
 
-        for epoch in range(self.config["epoch"]):
-            print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+        for epoch in range(self.model_params["epoch"]):
+            print('Epoch {}/{}'.format(epoch + 1, self.model_params["epoch"]))
             print('-' * 10)
 
             self.net.train()
@@ -77,7 +75,6 @@ class Trainer:
                 if self.use_cuda:
                     x = sample["data"].to(self.device_ids[0])
                     labels = sample["label"].to(self.device_ids[0])
-                    # snr = sample["snr"].to(self.device_ids[0])
                 else:
                     x = sample["data"]
                     labels = sample["label"]
@@ -107,17 +104,21 @@ class Trainer:
 
             self.scheduler.step()
 
-            os.makedirs(self.config["save_path"], exist_ok=True)
-            torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
-            print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
+            torch.save(self.net.state_dict(), os.path.join(save_path, "{}.tar".format(epoch)))
+            print("saved at {}".format(os.path.join(save_path, "{}.tar".format(epoch))))
 
-    def fs_train(self, now, patch_size):
+    '''
+    Meta-Training
+    '''
+    def fs_train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
-        model_name = self.config['fs_model']
+        patch_size = [2, 16]
+
+        model_name = self.config['model']
         robust = False
-        if model_name != 'vit':
+        if model_name == 'robustcnn':
             robust = True
 
         train_data = FewShotDataset(self.config["dataset_path"],
@@ -133,7 +134,7 @@ class Trainer:
         # fix torch seed
         torch_seed(0)
 
-        if model_name == 'rewis':
+        if model_name == 'protonet':
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,

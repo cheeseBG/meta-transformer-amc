@@ -1,0 +1,2 @@
+1. config 수정
+2. load_protonet -> class method로 변경 후 간소화하기

@@ -13,7 +13,7 @@ from plot.conf_matrix import plot_confusion_matrix
 from models.proto import *
 
 class Tester:
-    def __init__(self, config, model_path=None, save_path=None, per_snr=False):
+    def __init__(self, config, model_config, model_path=None, save_path=None, per_snr=False):
         self.config = get_config(config)
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
@@ -108,9 +108,11 @@ class Tester:
         plt.legend(loc='lower right', framealpha=1, fontsize=legend_fontsize)
         plt.show()
 
-    def fs_test(self, now, patch_size):
+    def fs_test(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+
+        patch_size = [2, 16]
 
         n_way = len(self.config['test_class_indices'])
         snr_range = range(self.config["test_snr_range"][0], self.config["test_snr_range"][1] + 1, 2)
@@ -119,7 +121,7 @@ class Tester:
 
         acc_per_size = []
 
-        model_name = self.config['fs_model']
+        model_name = self.config['model']
         robust = False
         if model_name in ['robustcnn']:
             robust = True
@@ -137,8 +139,6 @@ class Tester:
         elif model_name == 'vit':
             model = load_protonet_vit(patch_size, self.config)
 
-        elif model_name == 'lstm':
-            model = load_protonet_lstm(self.config)
         elif model_name == 'daelstm':
             model = load_protonet_daelstm(self.config)
         

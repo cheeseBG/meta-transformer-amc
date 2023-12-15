@@ -48,7 +48,7 @@ class ProtoNet(nn.Module):
         x_support = torch.from_numpy(x_support).cuda(0)
         x_query = torch.from_numpy(x_query).cuda(0)
 
-        if self.config['fs_model'] == 'resnet':
+        if self.config['model'] == 'resnet':
             x_support = x_support.reshape((-1,2,1,x_support.shape[-1]))
             x_query = x_query.reshape((-1,2,1,x_query.shape[-1]))
 
@@ -57,7 +57,7 @@ class ProtoNet(nn.Module):
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
         
-        if self.config['fs_model'] in ['lstm', 'daelstm']:
+        if self.config['model'] in ['lstm', 'daelstm']:
             x_support = x_support.squeeze().permute(0, 2, 1)
             x_query = x_query.squeeze().permute(0, 2, 1)
 
@@ -145,7 +145,7 @@ class ProtoNet(nn.Module):
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
 
-        if self.config['fs_model'] in ['lstm', 'daelstm']:
+        if self.config['model'] == 'daelstm':
             x_support = x_support.squeeze().permute(0, 2, 1)
             x_query = x_query.squeeze().permute(0, 2, 1)
 

@@ -2,7 +2,7 @@ import logging
 import argparse
 from runner.train import Trainer
 from runner.test import Tester
-from runner.utils import CustomFormatter, get_config
+from runner.utils import CustomFormatter
 from datetime import datetime
 
 if __name__ == '__main__':
@@ -14,36 +14,35 @@ if __name__ == '__main__':
     logger.addHandler(handler)
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('lr_mode', type=str, default='fs', help='Select learning method: sv(supervised), fs(few-shot)')
+    parser.add_argument('lr_mode', type=str, default='ml', help='Select learning method: sl(supervised-learing), ml(meta-learning)')
     parser.add_argument('mode', type=str, default='all', help='train: only train, test: only test, all: train+test')
 
     args = parser.parse_args()
 
-    cfg = get_config('./config.yaml')
-    # For wandb group-name
-    now = str(datetime.now())
+    cfg_path = './config/config.yaml'
+    model_cfg_path = './config/model_params.yaml'
 
-    # Supervised learning
-    if args.lr_mode == 'sv':
+    # Supervised-Learning
+    if args.lr_mode == 'sl':
         if args.mode in ['train', 'all']:
-            logger.info('Start supervised learning')
-            trainer = Trainer('./config.yaml')
+            logger.info('Start Supervised-Learning')
+            trainer = Trainer(cfg_path, model_cfg_path)
             trainer.train()
         if args.mode in ['test', 'all']:
-            tester = Tester('./config.yaml', per_snr=True)
+            tester = Tester(cfg_path, model_cfg_path, per_snr=True)
             tester.test()
 
-    # Few shot learning
-    elif args.lr_mode == 'fs':
+    # Meta-Learning
+    elif args.lr_mode == 'ml':
         if args.mode in ['train', 'all']:
-            logger.info('Start few-shot learning')
-            trainer = Trainer('./config.yaml')
-            trainer.fs_train(now, cfg['patch_size'])
+            logger.info('Start Meta-Learning')
+            trainer = Trainer(cfg_path, model_cfg_path)
+            trainer.fs_train()
 
         if args.mode in ['test', 'all']:
-            tester = Tester('./config.yaml')
+            tester = Tester(cfg_path, model_cfg_path)
             logger.info('Test')
-            tester.fs_test(now, cfg['patch_size'])
+            tester.fs_test()
 
     else:
         logger.error('Wrong argument!')

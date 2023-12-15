@@ -14,14 +14,14 @@ random.seed(50)
 
 
 class AMCTrainDataset(data.Dataset):
-    def __init__(self, root_path, robust=False, snr_range=None, sample_len=1024):
+    def __init__(self, config, robust=False, snr_range=None):
         super(AMCTrainDataset, self).__init__()
 
-        self.root_path = root_path
-        self.snr_range = snr_range
+        self.config = config
+        self.root_path = self.config['dataset_path']
+        self.snr_range = self.config['snr_range']
         self.transforms = AMCTransform()
         self.robust = robust
-        self.config = get_config('config.yaml')
 
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
@@ -31,7 +31,7 @@ class AMCTrainDataset(data.Dataset):
         self.snr = np.squeeze(self.data['Z'])
         self.num_modulation = 24
         self.num_sample = int(4096 * self.config['train_proportion'])  # sample per modulation-snr
-        self.sample_len = sample_len
+        self.sample_len = self.config['train_sample_size']
 
         # Sampling data in snr boundary
         if self.snr_range is not None:
@@ -73,7 +73,7 @@ class AMCTrainDataset(data.Dataset):
 
             sample = {"data": self.transforms(x), "label": label, "snr": self.snr[item]}  # self.transforms(x)
         else:
-            if self.config['model_name'] == 'daelstm':
+            if self.config['model'] == 'daelstm':
                 x = x.reshape((1024, 2))
             else:
                 x = np.expand_dims(x, axis=1)
@@ -238,7 +238,7 @@ class FewShotDataset(data.Dataset):
     def __getitem__(self, idx):
         # idx means index of episode
         sample = dict()
-
+    
         if self.robust is True:
             for label in self.labels:
                 sample[label] = dict()
@@ -247,9 +247,8 @@ class FewShotDataset(data.Dataset):
                 # support set
                 support_indices = random.sample(label_indices, self.num_support)
                 support_set = None
-                support_set = [np.concatenate((self.iq[i].transpose()[:, :self.train_sample_len],
-                                            self.exts[i][:, :self.train_sample_len]), axis=0)
-                            for i in support_indices]
+                support_set = [np.concatenate((self.iq[i].transpose(), np.flip(self.iq[i].transpose(), axis=1)), axis=0)
+                               for i in support_indices]
                 sample[label]['support'] = support_set
 
                 # query set
