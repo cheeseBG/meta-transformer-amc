@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
-from runner.utils import euclidean_dist, get_config
+from runner.utils import get_config
 from models.robustcnn import *
 from models.vit import *
 from models.protonet import *
@@ -68,7 +68,6 @@ class ProtoNet(nn.Module):
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
 
         # compute distances
-        #dists = euclidean_dist(z_query, z_proto)
         dists = torch.cdist(z_query, z_proto)
 
         # compute probabilities
@@ -76,13 +75,12 @@ class ProtoNet(nn.Module):
 
         loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
         _, y_hat = log_p_y.max(2)
-        acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()  # y_hat과 gt 같은지 비교
+        acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()
 
         return loss_val, {
             'loss': loss_val.item(),
             'acc': acc_val.item(),
             'y_hat': y_hat
-            # ,'target':target
         }
 
     def create_protoNet(self, sample):
@@ -108,7 +106,6 @@ class ProtoNet(nn.Module):
         x_support = torch.from_numpy(x_support).cuda(0)
 
         # encode dataloader dataframes of the support and the query set
-
         z_support = self.encoder.forward(x_support)
         z_support_dim = z_support.size(-1)
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
@@ -155,8 +152,6 @@ class ProtoNet(nn.Module):
         z_support_dim = z_support.size(-1)
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
 
-        # compute distances
-        # dists = euclidean_dist(z_query, z_proto)
         dists = torch.cdist(z_query, z_proto)
 
         # compute probabilities
@@ -164,45 +159,6 @@ class ProtoNet(nn.Module):
         _, y_hat = log_p_y.max(2)
         loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
         acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()  # y_hat과 gt 같은지 비교
-
-        return {
-            'acc': acc_val.item(),
-            'y_hat': y_hat
-        }
-
-    def proto_test_once(self, sample, z_proto):
-        n_way = len(sample.keys())
-        n_query = self.config['num_query']
-
-        """
-        support shape: [K_way, num_support, 1, I/Q, data_length]
-        query shape: [K_way, num_query, 1, I/Q, data_length]
-        """
-        x_query = None
-        for label in sample.keys():
-            if x_query is None:
-                x_query = np.array([np.array(iq) for iq in sample[label]['query']])
-            else:
-                x_query = np.vstack([x_query, np.array([np.array(iq) for iq in sample[label]['query']])])
-
-        x_query = torch.from_numpy(x_query).cuda(0)
-
-        # target indices are 0 ... n_way-1
-        target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
-        target_inds = Variable(target_inds, requires_grad=False)
-        target_inds = target_inds.cuda(0)
-
-        z_query = self.encoder.forward(x_query)
-
-        # compute distances
-        # dists = euclidean_dist(z_query, z_proto)
-        dists = torch.cdist(z_query, z_proto)
-
-        # compute probabilities
-        log_p_y = F.log_softmax(-dists, dim=1).view(n_way, n_query, -1)
-        _, y_hat = log_p_y.max(2)
-        loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
-        acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()
 
         return {
             'acc': acc_val.item(),
