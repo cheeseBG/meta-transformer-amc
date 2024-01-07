@@ -52,7 +52,7 @@ python main.py fs test
 
 ## Overview of meta-learning architecture 
 <div align="center">
-<img src="./paper_figures/figures/overview.jpg" width="780" height="450"/>
+<img src="./paper_figures/figures/overview.png" width="780" height="450"/>
 </div>
 
 - Meta-training : the encoder $f_{\theta}$  learns the metric space using prototypes of each class.
