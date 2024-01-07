@@ -2,7 +2,7 @@ import logging
 import argparse
 from runner.train import Trainer
 from runner.test import Tester
-from runner.utils import CustomFormatter
+from runner.utils import CustomFormatter, get_config
 from datetime import datetime
 
 if __name__ == '__main__':
@@ -19,6 +19,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    cfg = get_config('./config.yaml')
     # For wandb group-name
     now = str(datetime.now())
 
@@ -26,25 +27,24 @@ if __name__ == '__main__':
     if args.lr_mode == 'sv':
         if args.mode in ['train', 'all']:
             logger.info('Start supervised learning')
-            trainer = Trainer("config.yaml")
+            trainer = Trainer('./config.yaml')
             trainer.train()
         if args.mode in ['test', 'all']:
-            tester = Tester("config.yaml", per_snr=True)
+            tester = Tester('./config.yaml', per_snr=True)
             tester.test()
 
     # Few shot learning
     elif args.lr_mode == 'fs':
         if args.mode in ['train', 'all']:
             logger.info('Start few-shot learning')
-            trainer = Trainer("config.yaml")
-            trainer.fs_train(now)
+            trainer = Trainer('./config.yaml')
+            trainer.fs_train(now, cfg['patch_size'])
 
         if args.mode in ['test', 'all']:
-            tester = Tester("config.yaml")
-            logger.info('Original Test')
-            tester.fs_test(now)
-            # logger.info('New Metric Test ')
-            # tester.fs_test_once(now)
+            tester = Tester('./config.yaml')
+            logger.info('Test')
+            tester.fs_test(now, cfg['patch_size'])
+
     else:
         logger.error('Wrong argument!')
 

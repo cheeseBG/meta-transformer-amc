@@ -4,11 +4,13 @@ import torch.nn as nn
 import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
+import wandb
+import yaml
 from datetime import datetime
 from torch.optim import lr_scheduler, Adam
 from runner.utils import get_config, model_selection, torch_seed
 from data.dataset import AMCTrainDataset, FewShotDataset
-from models.proto import load_protonet_conv, load_protonet_robustcnn, load_protonet_vit
+from models.proto import *
 
 
 class Trainer:
@@ -21,11 +23,14 @@ class Trainer:
 
         self.net = model_selection(self.config["model_name"])
 
-        # optimizer
+         # optimizer
         if self.config["model_name"] == 'robustcnn':
             self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
         elif self.config["model_name"] == 'resnet':
             self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
+        elif self.config["model_name"] == 'daelstm':
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
+
         # loss
         self.loss = nn.CrossEntropyLoss()
 
@@ -47,7 +52,10 @@ class Trainer:
         if model_name == 'robustcnn':
             robust = True
 
-        train_data = AMCTrainDataset(self.config["dataset_path"], robust=robust, snr_range=self.config["snr_range"])
+        train_data = AMCTrainDataset(self.config["dataset_path"],
+                                     robust=robust,
+                                     snr_range=self.config["snr_range"],
+                                     sample_len=self.config["train_sample_size"])
         train_dataset_size = len(train_data)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
@@ -103,42 +111,56 @@ class Trainer:
             torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
             print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
 
-    def fs_train(self, now):
+    def fs_train(self, now, patch_size):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
 
         model_name = self.config['fs_model']
         robust = False
-        if model_name != 'vit':
+        if model_name == 'robustcnn':
             robust = True
 
         train_data = FewShotDataset(self.config["dataset_path"],
-                                    num_support=self.config["num_support"],
-                                    num_query=self.config["num_query"],
-                                    robust=robust,
-                                    snr_range=self.config["snr_range"])
+                                        num_support=self.config["num_support"],
+                                        num_query=self.config["num_query"],
+                                        robust=robust,
+                                        snr_range=self.config['snr_range'],
+                                        divide=self.config['data_divide'],  # divide by train proportion
+                                        sample_len=self.config["train_sample_size"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
         # fix torch seed
         torch_seed(0)
 
-        if model_name == 'protonet':
+        if model_name == 'rewis':
             model = load_protonet_conv(
                 x_dim=(1, 512, 256),
                 hid_dim=32,
                 z_dim=24,
+                config=self.config
             )
             optimizer = Adam(model.parameters(), lr=0.001)
             scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
 
         elif model_name == 'robustcnn':
-            model = load_protonet_robustcnn()
+            model = load_protonet_robustcnn(self.config)
             optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
 
         elif model_name == 'vit':
-            model = load_protonet_vit()
+            model = load_protonet_vit(patch_size, self.config)
+            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
+        
+        elif model_name == 'resnet':
+            model = load_protonet_resnet()
+            optimizer = Adam(model.parameters(), lr=self.config['lr'])
+
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
+
+        elif model_name == 'daelstm':
+            model = load_protonet_daelstm(self.config)
             optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
             scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 

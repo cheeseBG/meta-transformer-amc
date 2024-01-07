@@ -1,0 +1,17 @@
+command:
+  - python
+  - main.py
+  - fs
+  - test
+
+project: AMC_few-shot
+name: patch_size_test
+
+method: grid
+
+parameters:
+  patch_size:
+    values:
+      - [2, 16]
+
+
