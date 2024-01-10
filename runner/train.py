@@ -34,8 +34,8 @@ class Trainer:
         self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=self.model_params['lr_gamma'])
 
         if self.use_cuda:
-            self.net.to(self.device_ids[0])
-            self.loss.to(self.device_ids[0])
+            self.net = self.net.to(self.device_ids[0])
+            self.loss = self.loss.to(self.device_ids[0])
 
     '''
     Supervised Learning
@@ -49,7 +49,6 @@ class Trainer:
         os.makedirs(save_path, exist_ok=True)
 
         train_data = AMCTrainDataset(self.config, robust=self.robust)
-        train_dataset_size = len(train_data)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
         if self.model_path is not None:
@@ -66,13 +65,13 @@ class Trainer:
             total = 0
             iteration = 0
 
-            for i, sample in enumerate(tqdm.tqdm(train_dataloader)):
+            for sample in tqdm.tqdm(train_dataloader):
+                x = sample["data"]
+                labels = sample["label"]
+
                 if self.use_cuda:
-                    x = sample["data"].to(self.device_ids[0])
-                    labels = sample["label"].to(self.device_ids[0])
-                else:
-                    x = sample["data"]
-                    labels = sample["label"]
+                    x = x.to(self.device_ids[0])
+                    labels =labels.to(self.device_ids[0])
 
                 self.optimizer.zero_grad()
 
@@ -93,7 +92,7 @@ class Trainer:
                 if not (iteration % self.config['print_iter']):
                     print('iteration {} train loss: {:.8f}'.format(iteration, iter_loss / self.batch_size))
 
-            epoch_loss = train_loss / train_dataset_size
+            epoch_loss = train_loss / len(train_data)
             print('epoch train loss: {:.8f}'.format(epoch_loss))
             print(f'Accuracy: : {correct / total}')
 
@@ -105,20 +104,16 @@ class Trainer:
     '''
     Meta-Training
     '''
-    def fs_train(self):
+    def meta_train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
         print(f"Model: {self.config['model']}")
 
         patch_size = self.model_params['patch_size'] if self.config['model'] in ['vit_main', 'vit_sub'] else None
 
-        train_data = FewShotDataset(self.config["dataset_path"],
-                                        num_support=self.config["num_support"],
-                                        num_query=self.config["num_query"],
-                                        robust=self.robust,
-                                        snr_range=self.config['snr_range'],
-                                        divide=self.config['data_divide'],  # divide by train proportion
-                                        sample_len=self.config["train_sample_size"])
+        train_data = FewShotDataset(self.config,
+                                    snr_range=self.config['snr_range'],
+                                    sample_len=self.config["train_sample_size"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 

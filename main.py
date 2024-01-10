@@ -22,6 +22,9 @@ if __name__ == '__main__':
     cfg_path = './config/config.yaml'
     model_cfg_path = './config/model_params.yaml'
 
+    assert args.lr_mode in ['sl', 'ml']
+    assert args.mode in ['train', 'test', 'all']
+
     # Supervised-Learning
     if args.lr_mode == 'sl':
         if args.mode in ['train', 'all']:
@@ -37,13 +40,10 @@ if __name__ == '__main__':
         if args.mode in ['train', 'all']:
             logger.info('Start Meta-Learning')
             trainer = Trainer(cfg_path, model_cfg_path)
-            trainer.fs_train()
+            trainer.meta_train()
 
         if args.mode in ['test', 'all']:
             tester = Tester(cfg_path, model_cfg_path)
             logger.info('Test')
             tester.fs_test()
-
-    else:
-        logger.error('Wrong argument!')
 

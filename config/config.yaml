@@ -17,7 +17,6 @@ print_iter: 400 # print training info
 
 snr_range: [-10, 20]
 train_proportion: 0.8
-data_divide: True  # divide train, test dataset
 
 # test parameters
 test_dataset_path: ./amc_dataset/RML2018
@@ -41,4 +40,7 @@ num_query: 10
 ##### frame size variation eval parameters
 train_sample_size: 1024
 test_sample_size: [1024] # [64, 128, 256, 512, 1024]
+
+# input frame padding [self_duplicate(default), zero]
+padding: 'self_duplicate'
 
