@@ -13,26 +13,26 @@ from plot.conf_matrix import plot_confusion_matrix
 from models.proto import *
 
 class Tester:
-    def __init__(self, config, model_config, model_path=None, save_path=None, per_snr=False):
+    def __init__(self, config, model_config, per_snr=False):
         self.config = get_config(config)
+        self.model_params = get_config(model_config)[self.config['model']]
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
-        self.batch_size = self.config['batch_size']
+        self.batch_size = self.model_params["batch_size"]
         self.per_snr = per_snr
+        self.model_path = os.path.join(self.config['load_test_path'], self.config['model'], self.config['load_model_name'])
 
-        if model_path is None:
-            self.model_path = self.config['load_test_path']
-        else:
-            self.model_path = model_path
+        # If variable 'robust' is True, extend frame length to 4 x 1024
+        self.robust = True if self.config['model'] == 'robustcnn' else False 
 
-        self.net = model_selection(self.config["model_name"])
-
+        self.net = model_selection(self.config["model"])
         if self.use_cuda:
-            self.net.to(self.device_ids[0])
+            self.net = self.net.to(self.device_ids[0])
 
     def test(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+        print(f"Model: {self.config['model']}")
 
         snr_range = range(self.config["test_snr_range"][0], self.config["test_snr_range"][1] + 1, 2)
 
@@ -40,18 +40,13 @@ class Tester:
         acc_per_size = []
         self.net.load_state_dict(torch.load(self.model_path))
 
-        model_name = self.config['model_name']
-        robust = False
-        if model_name == 'robustcnn':
-            robust = True
-
         for sample_size in sample_size_list:
             acc_per_snr = []
 
             print(f'Size {sample_size} test start')
             for snr in snr_range:
-                test_data = AMCTestDataset(self.config["test_dataset_path"],
-                                           robust=robust,
+                test_data = AMCTestDataset(self.config,
+                                           robust=self.robust,
                                            snr_range=[snr, snr],
                                            sample_len=sample_size)
                 test_dataloader = DATA.DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
