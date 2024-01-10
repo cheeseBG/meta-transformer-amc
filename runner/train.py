@@ -6,33 +6,25 @@ import torch.nn.functional as F
 import tqdm
 import yaml
 from datetime import datetime
-from torch.optim import lr_scheduler, Adam
-from runner.utils import get_config, model_selection, torch_seed
+from runner.utils import model_selection, torch_seed
 from data.dataset import AMCTrainDataset, FewShotDataset
 from models.proto import *
 
 
 class Trainer:
-    def __init__(self, config, model_config, model_path=None):
-        self.config = get_config(config)
-        self.model_params = get_config(model_config)[self.config['model']]
+    def __init__(self, config, model_params, model_path=None):
+        self.config = config
+        self.model_params = model_params
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
         self.batch_size = self.model_params["batch_size"]
         self.model_path = model_path
-        self.net = model_selection(self.config["model"])
+        self.net, self.optimizer, self.scheduler = model_selection(self.config, self.model_params)
+        self.loss = nn.CrossEntropyLoss()
 
         # If variable 'robust' is True, extend frame length to 4 x 1024
         self.robust = True if self.config['model'] == 'robustcnn' else False 
-
-        if self.config["model"] == 'robustcnn':
-            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.model_params['lr'], momentum=0.9)
-        else:
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.model_params['lr'])
-
-        self.loss = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=self.model_params['lr_gamma'])
-
+       
         if self.use_cuda:
             self.net = self.net.to(self.device_ids[0])
             self.loss = self.loss.to(self.device_ids[0])
@@ -120,39 +112,10 @@ class Trainer:
         # fix torch seed
         torch_seed(0)
 
-        if model_name == 'protonet':
-            model = load_protonet_conv(
-                x_dim=(1, 512, 256),
-                hid_dim=32,
-                z_dim=24,
-                config=self.config
-            )
-            optimizer = Adam(model.parameters(), lr=0.001)
-            scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
+        model_name = 'protonet'
 
-        elif model_name == 'robustcnn':
-            model = load_protonet_robustcnn(self.config)
-            optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
-
-        elif model_name == 'vit':
-            model = load_protonet_vit(patch_size, self.config)
-            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
-        
-        elif model_name == 'resnet':
-            model = load_protonet_resnet()
-            optimizer = Adam(model.parameters(), lr=self.config['lr'])
-
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
-
-        elif model_name == 'daelstm':
-            model = load_protonet_daelstm(self.config)
-            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
-
-        for epoch in range(self.config["epoch"]):
-            print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+        for epoch in range(self.model_params["epoch"]):
+            print('Epoch {}/{}'.format(epoch + 1, self.model_params["epoch"]))
             print('-' * 10)
 
             # while epoch < max_epoch and not stop:

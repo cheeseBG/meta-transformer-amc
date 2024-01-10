@@ -6,7 +6,7 @@ import random
 from models.robustcnn import RobustCNN
 from models.resnet import ResNetStack
 from models.daelstm import DAELSTM
-
+from models.proto import *
 
 # get configs
 def get_config(config):
@@ -15,16 +15,37 @@ def get_config(config):
 
 
 # get model params in config
-def model_selection(model_name):
-    if model_name == 'robustcnn':
-        return RobustCNN(n_class=24, softmax=False)
-    elif model_name == 'resnet':
-        return ResNetStack()
-    elif model_name == 'daelstm':
-        return DAELSTM(input_shape=[1,2,1024],
-                   modulation_num=24)
-    else:
+def model_selection(config, model_params):
+    model_name = config['model']
+
+    model_dict = {
+        # Supervised
+        'robustcnn': {'model': RobustCNN(n_class=24, softmax=False), 'optimizer': torch.optim.SGD},
+        'resnet': {'model': ResNetStack(), 'optimizer': torch.optim.Adam},
+        'daelstm_super': {'model': DAELSTM(input_shape=[1, 2, 1024], modulation_num=24), 'optimizer': torch.optim.Adam},
+    
+        # # Meta
+        'vit_main': {'model': load_protonet_vit(model_params['in_size'], config), 'optimizer': torch.optim.Adam},
+        'vit_sub': {'model': load_protonet_vit(model_params['in_size'], config), 'optimizer': torch.optim.Adam},
+        'protonet': {'model': load_protonet_conv(
+            x_dim=(1, 512, 256),
+            hid_dim=32,
+            z_dim=24,
+            config = config
+            ) , 'optimizer': torch.optim.Adam},
+        'daelstm_meta': {'model': load_protonet_daelstm(config) , 'optimizer': torch.optim.Adam},
+    }
+
+    if model_name not in model_dict:
         raise NotImplementedError(model_name)
+
+    model_info = model_dict[model_name]
+    net = model_info['model']
+    optimizer = model_info['optimizer'](net.parameters(), lr=model_params['lr'])
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=model_params['lr_gamma'])
+    
+    return net, optimizer, scheduler
+
 
 def euclidean_dist(x, y):
     """

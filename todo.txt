@@ -1,3 +1,42 @@
-1. train.py: line 123 model selection 수정
+1. utils. model dict 해결
 2. load_protonet -> class method로 변경 후 간소화하기
 3. utils에서 필요없는 함수 제거
+
+import torch
+import importlib
+
+def model_selection(config, model_params):
+    model_name = config['model']
+
+    supervised_models = {
+        'robustcnn': {'module': 'your_module_name', 'class': 'RobustCNN', 'optimizer': torch.optim.SGD},
+        'resnet': {'module': 'your_module_name', 'class': 'ResNetStack', 'optimizer': torch.optim.Adam},
+        'daelstm_super': {'module': 'your_module_name', 'class': 'DAELSTM', 'input_shape': [1, 2, 1024], 'modulation_num': 24, 'optimizer': torch.optim.Adam},
+    }
+
+    meta_models = {
+        'vit_main': {'module': 'your_module_name', 'class': 'load_protonet_vit', 'in_size': model_params['in_size'], 'config': config, 'optimizer': torch.optim.Adam},
+        'vit_sub': {'module': 'your_module_name', 'class': 'load_protonet_vit', 'in_size': model_params['in_size'], 'config': config, 'optimizer': torch.optim.Adam},
+        'protonet': {'module': 'your_module_name', 'class': 'load_protonet_conv', 'x_dim': (1, 512, 256), 'hid_dim': 32, 'z_dim': 24, 'config': config, 'optimizer': torch.optim.Adam},
+        'daelstm_meta': {'module': 'your_module_name', 'class': 'load_protonet_daelstm', 'config': config, 'optimizer': torch.optim.Adam},
+    }
+
+    if model_name in supervised_models:
+        model_info = supervised_models[model_name]
+    elif model_name in meta_models:
+        model_info = meta_models[model_name]
+    else:
+        raise NotImplementedError(model_name)
+
+    module = importlib.import_module(model_info['module'])
+    model_class = getattr(module, model_info['class'])
+
+    if 'input_shape' in model_info:
+        net = model_class(input_shape=model_info['input_shape'], modulation_num=model_info['modulation_num'])
+    else:
+        net = model_class(**model_info)
+
+    optimizer = model_info['optimizer'](net.parameters(), lr=model_params['lr'])
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=model_params['lr_gamma'])
+
+    return net, optimizer, scheduler

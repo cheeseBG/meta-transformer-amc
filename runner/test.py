@@ -13,9 +13,9 @@ from plot.conf_matrix import plot_confusion_matrix
 from models.proto import *
 
 class Tester:
-    def __init__(self, config, model_config, per_snr=False):
-        self.config = get_config(config)
-        self.model_params = get_config(model_config)[self.config['model']]
+    def __init__(self, config, model_params, per_snr=False):
+        self.config = config
+        self.model_params = model_params
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
         self.batch_size = self.model_params["batch_size"]

@@ -1,6 +1,7 @@
 # Proposed Meta-Transformer
 # Main encoder: train with 1024 frame length
 vit_main: {
+  lr_mode: meta, # learning mode
 
   epoch: 50,
   batch_size: 128,
@@ -20,6 +21,7 @@ vit_main: {
 
 # Sub encoder: train with 256 frame length
 vit_sub: {
+  lr_mode: meta, # learning mode
 
   epoch: 50,
   batch_size: 128,
@@ -39,6 +41,7 @@ vit_sub: {
 
 # Meta-Learning 
 protonet: {
+  lr_mode: meta, # learning mode
 
   epoch: 50,
   batch_size: 128,
@@ -49,6 +52,7 @@ protonet: {
 
 # Meta-Learning
 daelstm_meta: {
+  lr_mode: meta, # learning mode
 
   epoch: 50,
   batch_size: 128,
@@ -59,6 +63,7 @@ daelstm_meta: {
 
 # Supervised Learning
 daelstm_super: {
+  lr_mode: supervised, # learning mode
 
   epoch: 150,
   batch_size: 128,
@@ -69,6 +74,7 @@ daelstm_super: {
 
 # Supervised Learning
 resnet: {
+  lr_mode: supervised, # learning mode
 
   epoch: 50,
   batch_size: 1024,
@@ -79,6 +85,7 @@ resnet: {
 
 # Supervised Learning
 robustcnn: {
+  lr_mode: supervised, # learning mode
 
   epoch: 50,
   batch_size: 128,

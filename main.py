@@ -2,7 +2,7 @@ import logging
 import argparse
 from runner.train import Trainer
 from runner.test import Tester
-from runner.utils import CustomFormatter
+from runner.utils import CustomFormatter, get_config
 from datetime import datetime
 
 if __name__ == '__main__':
@@ -14,36 +14,26 @@ if __name__ == '__main__':
     logger.addHandler(handler)
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('lr_mode', type=str, default='ml', help='Select learning method: sl(supervised-learing), ml(meta-learning)')
     parser.add_argument('mode', type=str, default='all', help='train: only train, test: only test, all: train+test')
 
     args = parser.parse_args()
 
-    cfg_path = './config/config.yaml'
-    model_cfg_path = './config/model_params.yaml'
+    config = get_config('./config/config.yaml')
+    model_params = get_config('./config/model_params.yaml')[config['model']]
+    lr_mode = model_params['lr_mode']
 
-    assert args.lr_mode in ['sl', 'ml']
     assert args.mode in ['train', 'test', 'all']
 
-    # Supervised-Learning
-    if args.lr_mode == 'sl':
+    def run_training(trainer, tester):
         if args.mode in ['train', 'all']:
-            logger.info('Start Supervised-Learning')
-            trainer = Trainer(cfg_path, model_cfg_path)
+            logger.info(f'Start {lr_mode.capitalize()}-Learning')
             trainer.train()
-        if args.mode in ['test', 'all']:
-            tester = Tester(cfg_path, model_cfg_path, per_snr=True)
-            tester.test()
-
-    # Meta-Learning
-    elif args.lr_mode == 'ml':
-        if args.mode in ['train', 'all']:
-            logger.info('Start Meta-Learning')
-            trainer = Trainer(cfg_path, model_cfg_path)
-            trainer.meta_train()
 
         if args.mode in ['test', 'all']:
-            tester = Tester(cfg_path, model_cfg_path)
             logger.info('Test')
-            tester.fs_test()
+            tester.test() if args.lr_mode == 'supervised' else tester.fs_test()
+
+    trainer = Trainer(config, model_params)
+    tester = Tester(config, model_params, per_snr=(args.lr_mode == 'supervised'))
+    run_training(trainer, tester)
 

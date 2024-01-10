@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
-from runner.utils import get_config
 from models.robustcnn import *
 from models.vit import *
 from models.protonet import *
@@ -15,7 +14,7 @@ class ProtoNet(nn.Module):
     def __init__(self, encoder, config):
         """
         Args:
-            encoder : CNN encoding the dataloader dataframes in sample
+            encoder : Feture extractor(model) encoding the dataloader dataframes in sample
             n_way (int): number of classes in a classification task
             n_support (int): number of labeled examples per class in the support set
             n_query (int): number of labeled examples per class in the query set
@@ -186,10 +185,11 @@ def load_protonet_conv(**kwargs):
     x_dim = kwargs['x_dim']
     hid_dim = kwargs['hid_dim']
     z_dim = kwargs['z_dim']
+    config = kwargs['config']
 
     encoder = ProtoNet_CNN(x_dim[0], hid_dim, z_dim)
     
-    return ProtoNet(encoder)
+    return ProtoNet(encoder, config)
 
 
 def load_protonet_robustcnn(config):
