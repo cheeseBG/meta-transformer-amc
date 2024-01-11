@@ -1,4 +1,0 @@
-
-2. load_protonet -> class method로 변경 후 간소화하기
-3. utils에서 필요없는 함수 제거
-4. 시각화 함수 정리

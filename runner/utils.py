@@ -87,13 +87,6 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def cosine_similarity(x, y):
-    n = x.size(0)
-    m = y.size(0)
-    d = x.size(1)
-    assert d == y.size(1)
-
-
 class CustomFormatter(logging.Formatter):
 
     grey = "\x1b[38;20m"
