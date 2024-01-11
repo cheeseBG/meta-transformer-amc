@@ -13,12 +13,12 @@ random.seed(50)
 
 
 class AMCTrainDataset(data.Dataset):
-    def __init__(self, config, robust=False, snr_range=None):
+    def __init__(self, config, robust=False):
         super(AMCTrainDataset, self).__init__()
 
         self.config = config
         self.root_path = self.config['dataset_path']
-        self.snr_range = self.config['snr_range']
+        self.snr_range = self.config['tain_snr_range']
         self.transforms = AMCTransform()
         self.robust = robust
 

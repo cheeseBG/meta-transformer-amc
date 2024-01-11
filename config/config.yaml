@@ -16,13 +16,13 @@ cuda: True
 gpu_ids: [0]  # set the GPU ids to use, e.g. [0] or [1, 2]
 print_iter: 400 # print training info
 
-snr_range: [-10, 20]
+train_snr_range: [-10, 20]
 train_proportion: 0.8
 
 # test parameters
 test_dataset_path: ./amc_dataset/RML2018
 load_test_path: ./checkpoint/learning
-load_model_name: 0.tar
+load_model_name: 49.tar
 show_conf_matrix: False
 show_result: True
 save_result: True
