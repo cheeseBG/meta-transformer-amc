@@ -33,6 +33,9 @@ meta-transformer-amc
    |                └——————GOLD_XYZ_OSC.0001_1024.hdf5
    └——————checkpoint
             └——————learning
+            |       └——————0.tar
+            |       └——————1.tar
+            |              ...
             └——————size
             └——————unseen
 ```
