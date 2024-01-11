@@ -10,7 +10,7 @@ model: vit_main
 
 # train parameters
 dataset_path: ./amc_dataset/RML2018
-save_path: ./checkpoint/paper/learning
+save_path: ./checkpoint/learning
 
 cuda: True
 gpu_ids: [0]  # set the GPU ids to use, e.g. [0] or [1, 2]
@@ -21,7 +21,7 @@ train_proportion: 0.8
 
 # test parameters
 test_dataset_path: ./amc_dataset/RML2018
-load_test_path: ./checkpoint/paper/learning
+load_test_path: ./checkpoint/learning
 load_model_name: 0.tar
 show_conf_matrix: False
 show_result: True
