@@ -40,7 +40,7 @@ meta-transformer-amc
 ## Usage
 The default setting classifies 5 unseen modulations using the proposed model pre-trained with 12 random modulations:
 ```
-python main.py fs test
+python main.py test
 ```
 *If you want to run another evaluation, you can proceed by modifying the `config.yaml`.*  
 *Various evaluation cases are specified in the paper.*  
