@@ -206,28 +206,19 @@ def load_protonet_robustcnn(config):
     return ProtoNet(encoder, config)
 
 
-def load_protonet_vit(patch_size, config):
+def load_protonet_vit(config, model_params):
 
     encoder = ViT(
-        in_channels=config["in_channels"],
-        #patch_size=tuple(config["patch_size"]),
-        patch_size=tuple(patch_size),
-        embed_dim=config["embed_dim"],
-        num_layers=config["num_layers"],
-        num_heads=config["num_heads"],
-        mlp_dim=config["mlp_dim"],
-        num_classes=config["num_classes"],
-        in_size=config["in_size"]
+        in_channels=model_params["in_channels"],
+        patch_size=model_params["patch_size"],
+        embed_dim=model_params["embed_dim"],
+        num_layers=model_params["num_layers"],
+        num_heads=model_params["num_heads"],
+        mlp_dim=model_params["mlp_dim"],
+        num_classes=model_params["num_classes"],
+        in_size=model_params["in_size"]
 
     )
-    return ProtoNet(encoder, config)
-
-def load_protonet_lstm(config):
-
-    encoder = LSTM(input_size=2,
-                   hidden_size=128,
-                   num_classes=config["num_classes"])
-
     return ProtoNet(encoder, config)
 
 def load_protonet_daelstm(config):
@@ -236,11 +227,4 @@ def load_protonet_daelstm(config):
                    modulation_num=config["num_classes"])
 
     return ProtoNet(encoder, config)
-
-def load_protonet_resnet():
-    config = get_config('config.yaml')
-
-    encoder = ResNetStack()
-
-    return ProtoNet(encoder)
 

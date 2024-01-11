@@ -1,11 +1,12 @@
 # ### Models ###
-# vit: proposed Meta-Transformer(default)
+# vit_main: proposed Meta-Transformer(default)
+# vit_sub: proposed Meta-Transformer (sub frame length)
 # daelstm-meta: LSTM based AMC model(Meta-Learning)
 # daelstm-super: Supervised Learning version
 # protonet: Meta-Learning example
 # resnet: resnet based AMC model
 # robustcnn: CNN based model which is using 4 x 1024 frame size(reverse and concatenate)
-model: robustcnn
+model: vit_main
 
 # train parameters
 dataset_path: ./amc_dataset/RML2018
@@ -21,8 +22,10 @@ train_proportion: 0.8
 # test parameters
 test_dataset_path: ./amc_dataset/RML2018
 load_test_path: ./checkpoint/paper/learning
-load_model_name: 49.tar
+load_model_name: 0.tar
 show_conf_matrix: False
+show_result: True
+save_result: True
 test_snr_range: [-20,20]
 
 # AMC dataset configuration
@@ -37,9 +40,9 @@ test_class_indices: [0, 2, 4, 6, 12] # 5
 num_support: 5
 num_query: 10
 
-##### frame size variation eval parameters
-train_sample_size: 1024
-test_sample_size: [1024] # [64, 128, 256, 512, 1024]
+##### frame length variation eval parameters
+train_sample_len: 1024
+test_sample_len: [1024] # [64, 128, 256, 512, 1024]
 
 # input frame padding [self_duplicate(default), zero]
 padding: 'self_duplicate'

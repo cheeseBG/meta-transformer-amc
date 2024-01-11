@@ -51,3 +51,27 @@ def plot_confusion_matrix(conf_mat, classes, normalize=True, title=None, cmap=pl
 
     fig.tight_layout()
     plt.savefig('paper_figures/figures/best_conf_resnet.png', bbox_inches='tight')
+
+def eval_plotter(snr_range, acc_per_size, sample_size_list):
+    # SNR Graph
+    plt.rcParams['font.family'] = 'Arial'
+    title_fontsize = 32
+    xlabel_fontsize = 30
+    ylabel_fontsize = 30
+    xticks_fontsize = 28
+    yticks_fontsize = 28
+    legend_fontsize = 20
+
+    markers = ['*', '>', 'x', '.', '^', '<', 'v']
+
+    for i, sample_size in enumerate(sample_size_list):
+        plt.plot(snr_range, acc_per_size[i], label=f'sample_size{str(sample_size)}', marker=markers[i],
+                    markersize=16)
+
+    plt.xlabel("Signal to Noise Ratio", fontsize=xlabel_fontsize)
+    plt.ylabel("Classification Accuracy", fontsize=ylabel_fontsize)
+    plt.title("Classification Accuracy on RadioML 2018.01 Alpha", fontsize=title_fontsize)
+    plt.xticks(fontsize=xticks_fontsize)
+    plt.yticks(fontsize=yticks_fontsize)
+    plt.legend(loc='lower right', framealpha=1, fontsize=legend_fontsize)
+    plt.show()

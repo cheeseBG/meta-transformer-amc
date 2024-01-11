@@ -154,7 +154,7 @@ class AMCTestDataset(data.Dataset):
 
 
 class FewShotDataset(data.Dataset):
-    def __init__(self, config, mode='train', snr_range=None, sample_len=1024):
+    def __init__(self, config, mode='train', snr_range=None, sample_len=1024, train_sample_len=1024):
         self.config = config
         self.root_path = self.config['dataset_path']
         self.snr_range = snr_range
@@ -164,8 +164,8 @@ class FewShotDataset(data.Dataset):
         
         self.data = h5py.File(os.path.join(self.root_path, "GOLD_XYZ_OSC.0001_1024.hdf5"), 'r')
         self.class_labels = json.load(open(os.path.join(self.root_path, "classes-fixed.json"), 'r'))
-        self.sample_len = sample_len
-        self.test_sample_len = self.config['test_sample_size']
+        self.train_sample_len = train_sample_len
+        self.test_sample_len = sample_len
 
         self.iq = self.data['X']
         self.onehot = self.data['Y']
@@ -238,7 +238,7 @@ class FewShotDataset(data.Dataset):
 
             # support set
             support_indices = random.sample(label_indices, self.num_support)
-            support_set = [self.iq[i].transpose()[:, :self.sample_len] for i in support_indices]
+            support_set = [self.iq[i].transpose()[:, :self.test_sample_len] for i in support_indices]
             sample[label]['support'] = support_set
 
             # query set
@@ -246,14 +246,14 @@ class FewShotDataset(data.Dataset):
             query_indices = random.sample(query_indices, self.num_query)
             query_set = None
             if self.mode == 'train':
-                query_set = [self.iq[i].transpose()[:, :self.sample_len] for i in query_indices]
+                query_set = [self.iq[i].transpose()[:, :self.test_sample_len] for i in query_indices]
             else:
                 if self.padding == 'self_duplicate':
-                    num_dup = (self.sample_len // self.test_sample_len)
+                    num_dup = (self.train_sample_len // self.test_sample_len)
                     query_set = [np.concatenate([self.iq[i].transpose()[:, :self.test_sample_len] for _ in range(num_dup)], axis=1) for i in query_indices]
                 elif self.padding == 'zero':
                     query_set = [np.concatenate((self.iq[i].transpose()[:, :self.test_sample_len], 
-                                                np.zeros((2, self.sample_len-self.test_sample_len),dtype=np.float32)), axis=1) for i in query_indices]
+                                                np.zeros((2, self.train_sample_len-self.test_sample_len),dtype=np.float32)), axis=1) for i in query_indices]
 
             sample[label]['query'] = query_set
 

@@ -4,11 +4,9 @@ import torch.nn as nn
 import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
-import yaml
 from datetime import datetime
 from runner.utils import model_selection, torch_seed
 from data.dataset import AMCTrainDataset, FewShotDataset
-from models.proto import *
 
 
 class Trainer:
@@ -19,6 +17,7 @@ class Trainer:
         self.device_ids = self.config['gpu_ids']
         self.batch_size = self.model_params["batch_size"]
         self.model_path = model_path
+        self.save_path = os.path.join(self.config["save_path"], self.config['model'])
         self.net, self.optimizer, self.scheduler = model_selection(self.config, self.model_params)
         self.loss = nn.CrossEntropyLoss()
 
@@ -37,9 +36,7 @@ class Trainer:
         print("Device id: ", self.device_ids[0])
         print(f"Model: {self.config['model']}")
 
-        save_path = os.path.join(self.config["save_path"], self.config['model'])
-        os.makedirs(save_path, exist_ok=True)
-
+        os.makedirs(self.save_path, exist_ok=True)
         train_data = AMCTrainDataset(self.config, robust=self.robust)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
@@ -101,8 +98,7 @@ class Trainer:
         print("Device id: ", self.device_ids[0])
         print(f"Model: {self.config['model']}")
 
-        patch_size = self.model_params['patch_size'] if self.config['model'] in ['vit_main', 'vit_sub'] else None
-
+        os.makedirs(self.save_path, exist_ok=True)
         train_data = FewShotDataset(self.config,
                                     snr_range=self.config['snr_range'],
                                     sample_len=self.config["train_sample_size"])
@@ -111,8 +107,6 @@ class Trainer:
 
         # fix torch seed
         torch_seed(0)
-
-        model_name = 'protonet'
 
         for epoch in range(self.model_params["epoch"]):
             print('Epoch {}/{}'.format(epoch + 1, self.model_params["epoch"]))
@@ -123,19 +117,19 @@ class Trainer:
             train_acc = 0.0
 
             for episode, sample in enumerate(tqdm.tqdm(train_dataloader)):
-                optimizer.zero_grad()
-                loss, output = model.proto_train(sample)
+                self.optimizer.zero_grad()
+                loss, output = self.net.proto_train(sample)
                 train_loss += output['loss']
                 train_acc += output['acc']
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
 
             epoch_loss = train_loss / (episode+1)
             epoch_acc = train_acc / (episode+1)
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
-            scheduler.step()
+            self.scheduler.step()
 
             os.makedirs(self.config["save_path"], exist_ok=True)
-            torch.save(model.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
-            print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
+            torch.save(self.net.state_dict(), os.path.join(self.save_path, "{}.tar".format(epoch)))
+            print("saved at {}".format(os.path.join(self.save_path, "{}.tar".format(epoch))))

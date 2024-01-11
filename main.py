@@ -27,13 +27,13 @@ if __name__ == '__main__':
     def run_training(trainer, tester):
         if args.mode in ['train', 'all']:
             logger.info(f'Start {lr_mode.capitalize()}-Learning')
-            trainer.train()
+            trainer.train() if lr_mode == 'supervised' else trainer.meta_train()
 
         if args.mode in ['test', 'all']:
             logger.info('Test')
-            tester.test() if args.lr_mode == 'supervised' else tester.fs_test()
+            tester.test() if lr_mode == 'supervised' else tester.meta_test()
 
     trainer = Trainer(config, model_params)
-    tester = Tester(config, model_params, per_snr=(args.lr_mode == 'supervised'))
+    tester = Tester(config, model_params, per_snr=(lr_mode == 'supervised'))
     run_training(trainer, tester)
 
