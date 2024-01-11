@@ -4,66 +4,47 @@ import torch.nn as nn
 import torch.utils.data as DATA
 import torch.nn.functional as F
 import tqdm
-import wandb
-import yaml
 from datetime import datetime
-from torch.optim import lr_scheduler, Adam
-from runner.utils import get_config, model_selection, torch_seed
+from runner.utils import model_selection, torch_seed
 from data.dataset import AMCTrainDataset, FewShotDataset
-from models.proto import *
 
 
 class Trainer:
-    def __init__(self, config, model_path=None):
-        self.config = get_config(config)
+    def __init__(self, config, model_params, model_path=None):
+        self.config = config
+        self.model_params = model_params
         self.use_cuda = self.config['cuda']
         self.device_ids = self.config['gpu_ids']
-        self.batch_size = self.config["batch_size"]
+        self.batch_size = self.model_params["batch_size"]
         self.model_path = model_path
-
-        self.net = model_selection(self.config["model_name"])
-
-         # optimizer
-        if self.config["model_name"] == 'robustcnn':
-            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=self.config['lr'], momentum=0.9)
-        elif self.config["model_name"] == 'resnet':
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
-        elif self.config["model_name"] == 'daelstm':
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.config['lr'])
-
-        # loss
+        self.save_path = os.path.join(self.config["save_path"], self.config['model'])
+        self.net, self.optimizer, self.scheduler = model_selection(self.config, self.model_params)
         self.loss = nn.CrossEntropyLoss()
 
-        # scheduler
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.9)
-
+        # If variable 'robust' is True, extend frame length to 4 x 1024
+        self.robust = True if self.config['model'] == 'robustcnn' else False 
+       
         if self.use_cuda:
-            self.net.to(self.device_ids[0])
-            self.loss.to(self.device_ids[0])
+            self.net = self.net.to(self.device_ids[0])
+            self.loss = self.loss.to(self.device_ids[0])
 
+    '''
+    Supervised Learning
+    '''
     def train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+        print(f"Model: {self.config['model']}")
 
-        model_name = self.config['model_name']
-        print(f'Model Name: {model_name}')
-
-        robust = False
-        if model_name == 'robustcnn':
-            robust = True
-
-        train_data = AMCTrainDataset(self.config["dataset_path"],
-                                     robust=robust,
-                                     snr_range=self.config["snr_range"],
-                                     sample_len=self.config["train_sample_size"])
-        train_dataset_size = len(train_data)
+        os.makedirs(self.save_path, exist_ok=True)
+        train_data = AMCTrainDataset(self.config, robust=self.robust)
         train_dataloader = DATA.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
         if self.model_path is not None:
             self.net.load_state_dict(torch.load(self.model_path))
 
-        for epoch in range(self.config["epoch"]):
-            print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+        for epoch in range(self.model_params["epoch"]):
+            print('Epoch {}/{}'.format(epoch + 1, self.model_params["epoch"]))
             print('-' * 10)
 
             self.net.train()
@@ -73,14 +54,13 @@ class Trainer:
             total = 0
             iteration = 0
 
-            for i, sample in enumerate(tqdm.tqdm(train_dataloader)):
+            for sample in tqdm.tqdm(train_dataloader):
+                x = sample["data"]
+                labels = sample["label"]
+
                 if self.use_cuda:
-                    x = sample["data"].to(self.device_ids[0])
-                    labels = sample["label"].to(self.device_ids[0])
-                    # snr = sample["snr"].to(self.device_ids[0])
-                else:
-                    x = sample["data"]
-                    labels = sample["label"]
+                    x = x.to(self.device_ids[0])
+                    labels =labels.to(self.device_ids[0])
 
                 self.optimizer.zero_grad()
 
@@ -101,71 +81,35 @@ class Trainer:
                 if not (iteration % self.config['print_iter']):
                     print('iteration {} train loss: {:.8f}'.format(iteration, iter_loss / self.batch_size))
 
-            epoch_loss = train_loss / train_dataset_size
+            epoch_loss = train_loss / len(train_data)
             print('epoch train loss: {:.8f}'.format(epoch_loss))
             print(f'Accuracy: : {correct / total}')
 
             self.scheduler.step()
 
-            os.makedirs(self.config["save_path"], exist_ok=True)
-            torch.save(self.net.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
-            print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
+            torch.save(self.net.state_dict(), os.path.join(save_path, "{}.tar".format(epoch)))
+            print("saved at {}".format(os.path.join(save_path, "{}.tar".format(epoch))))
 
-    def fs_train(self, now, patch_size):
+    '''
+    Meta-Training
+    '''
+    def meta_train(self):
         print("Cuda: ", torch.cuda.is_available())
         print("Device id: ", self.device_ids[0])
+        print(f"Model: {self.config['model']}")
 
-        model_name = self.config['fs_model']
-        robust = False
-        if model_name == 'robustcnn':
-            robust = True
-
-        train_data = FewShotDataset(self.config["dataset_path"],
-                                        num_support=self.config["num_support"],
-                                        num_query=self.config["num_query"],
-                                        robust=robust,
-                                        snr_range=self.config['snr_range'],
-                                        divide=self.config['data_divide'],  # divide by train proportion
-                                        sample_len=self.config["train_sample_size"])
+        os.makedirs(self.save_path, exist_ok=True)
+        train_data = FewShotDataset(self.config,
+                                    snr_range=self.config['snr_range'],
+                                    sample_len=self.config["train_sample_size"])
 
         train_dataloader = DATA.DataLoader(train_data, batch_size=1, shuffle=True)
 
         # fix torch seed
         torch_seed(0)
 
-        if model_name == 'rewis':
-            model = load_protonet_conv(
-                x_dim=(1, 512, 256),
-                hid_dim=32,
-                z_dim=24,
-                config=self.config
-            )
-            optimizer = Adam(model.parameters(), lr=0.001)
-            scheduler = lr_scheduler.StepLR(optimizer, 1, gamma=0.5, last_epoch=-1)
-
-        elif model_name == 'robustcnn':
-            model = load_protonet_robustcnn(self.config)
-            optimizer = torch.optim.SGD(model.parameters(), lr=self.config['lr'], momentum=0.9)
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=self.config["lr_gamma"])
-
-        elif model_name == 'vit':
-            model = load_protonet_vit(patch_size, self.config)
-            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
-        
-        elif model_name == 'resnet':
-            model = load_protonet_resnet()
-            optimizer = Adam(model.parameters(), lr=self.config['lr'])
-
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
-
-        elif model_name == 'daelstm':
-            model = load_protonet_daelstm(self.config)
-            optimizer = torch.optim.Adam(model.parameters(), lr=self.config['trans_lr'])
-            scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
-
-        for epoch in range(self.config["epoch"]):
-            print('Epoch {}/{}'.format(epoch + 1, self.config["epoch"]))
+        for epoch in range(self.model_params["epoch"]):
+            print('Epoch {}/{}'.format(epoch + 1, self.model_params["epoch"]))
             print('-' * 10)
 
             # while epoch < max_epoch and not stop:
@@ -173,19 +117,19 @@ class Trainer:
             train_acc = 0.0
 
             for episode, sample in enumerate(tqdm.tqdm(train_dataloader)):
-                optimizer.zero_grad()
-                loss, output = model.proto_train(sample)
+                self.optimizer.zero_grad()
+                loss, output = self.net.proto_train(sample)
                 train_loss += output['loss']
                 train_acc += output['acc']
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
 
             epoch_loss = train_loss / (episode+1)
             epoch_acc = train_acc / (episode+1)
             print('Epoch {:d} -- Loss: {:.4f} Acc: {:.4f}'.format(epoch + 1, epoch_loss, epoch_acc))
-            scheduler.step()
+            self.scheduler.step()
 
             os.makedirs(self.config["save_path"], exist_ok=True)
-            torch.save(model.state_dict(), os.path.join(self.config["save_path"], "{}.tar".format(epoch)))
-            print("saved at {}".format(os.path.join(self.config["save_path"], "{}.tar".format(epoch))))
+            torch.save(self.net.state_dict(), os.path.join(self.save_path, "{}.tar".format(epoch)))
+            print("saved at {}".format(os.path.join(self.save_path, "{}.tar".format(epoch))))

@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
-from runner.utils import euclidean_dist, get_config
 from models.robustcnn import *
 from models.vit import *
 from models.protonet import *
@@ -15,7 +14,7 @@ class ProtoNet(nn.Module):
     def __init__(self, encoder, config):
         """
         Args:
-            encoder : CNN encoding the dataloader dataframes in sample
+            encoder : Feture extractor(model) encoding the dataloader dataframes in sample
             n_way (int): number of classes in a classification task
             n_support (int): number of labeled examples per class in the support set
             n_query (int): number of labeled examples per class in the query set
@@ -48,7 +47,7 @@ class ProtoNet(nn.Module):
         x_support = torch.from_numpy(x_support).cuda(0)
         x_query = torch.from_numpy(x_query).cuda(0)
 
-        if self.config['fs_model'] == 'resnet':
+        if self.config['model'] == 'resnet':
             x_support = x_support.reshape((-1,2,1,x_support.shape[-1]))
             x_query = x_query.reshape((-1,2,1,x_query.shape[-1]))
 
@@ -57,7 +56,7 @@ class ProtoNet(nn.Module):
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
         
-        if self.config['fs_model'] in ['lstm', 'daelstm']:
+        if self.config['model'] in ['lstm', 'daelstm']:
             x_support = x_support.squeeze().permute(0, 2, 1)
             x_query = x_query.squeeze().permute(0, 2, 1)
 
@@ -68,7 +67,6 @@ class ProtoNet(nn.Module):
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
 
         # compute distances
-        #dists = euclidean_dist(z_query, z_proto)
         dists = torch.cdist(z_query, z_proto)
 
         # compute probabilities
@@ -76,13 +74,12 @@ class ProtoNet(nn.Module):
 
         loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
         _, y_hat = log_p_y.max(2)
-        acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()  # y_hat과 gt 같은지 비교
+        acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()
 
         return loss_val, {
             'loss': loss_val.item(),
             'acc': acc_val.item(),
             'y_hat': y_hat
-            # ,'target':target
         }
 
     def create_protoNet(self, sample):
@@ -108,7 +105,6 @@ class ProtoNet(nn.Module):
         x_support = torch.from_numpy(x_support).cuda(0)
 
         # encode dataloader dataframes of the support and the query set
-
         z_support = self.encoder.forward(x_support)
         z_support_dim = z_support.size(-1)
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
@@ -145,7 +141,7 @@ class ProtoNet(nn.Module):
         target_inds = Variable(target_inds, requires_grad=False)
         target_inds = target_inds.cuda(0)
 
-        if self.config['fs_model'] in ['lstm', 'daelstm']:
+        if self.config['model'] == 'daelstm':
             x_support = x_support.squeeze().permute(0, 2, 1)
             x_query = x_query.squeeze().permute(0, 2, 1)
 
@@ -155,8 +151,6 @@ class ProtoNet(nn.Module):
         z_support_dim = z_support.size(-1)
         z_proto = z_support.view(n_way, n_support, z_support_dim).mean(1)
 
-        # compute distances
-        # dists = euclidean_dist(z_query, z_proto)
         dists = torch.cdist(z_query, z_proto)
 
         # compute probabilities
@@ -164,45 +158,6 @@ class ProtoNet(nn.Module):
         _, y_hat = log_p_y.max(2)
         loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
         acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()  # y_hat과 gt 같은지 비교
-
-        return {
-            'acc': acc_val.item(),
-            'y_hat': y_hat
-        }
-
-    def proto_test_once(self, sample, z_proto):
-        n_way = len(sample.keys())
-        n_query = self.config['num_query']
-
-        """
-        support shape: [K_way, num_support, 1, I/Q, data_length]
-        query shape: [K_way, num_query, 1, I/Q, data_length]
-        """
-        x_query = None
-        for label in sample.keys():
-            if x_query is None:
-                x_query = np.array([np.array(iq) for iq in sample[label]['query']])
-            else:
-                x_query = np.vstack([x_query, np.array([np.array(iq) for iq in sample[label]['query']])])
-
-        x_query = torch.from_numpy(x_query).cuda(0)
-
-        # target indices are 0 ... n_way-1
-        target_inds = torch.arange(0, n_way).view(n_way, 1, 1).expand(n_way, n_query, 1).long()
-        target_inds = Variable(target_inds, requires_grad=False)
-        target_inds = target_inds.cuda(0)
-
-        z_query = self.encoder.forward(x_query)
-
-        # compute distances
-        # dists = euclidean_dist(z_query, z_proto)
-        dists = torch.cdist(z_query, z_proto)
-
-        # compute probabilities
-        log_p_y = F.log_softmax(-dists, dim=1).view(n_way, n_query, -1)
-        _, y_hat = log_p_y.max(2)
-        loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
-        acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()
 
         return {
             'acc': acc_val.item(),
@@ -230,10 +185,11 @@ def load_protonet_conv(**kwargs):
     x_dim = kwargs['x_dim']
     hid_dim = kwargs['hid_dim']
     z_dim = kwargs['z_dim']
+    config = kwargs['config']
 
     encoder = ProtoNet_CNN(x_dim[0], hid_dim, z_dim)
     
-    return ProtoNet(encoder)
+    return ProtoNet(encoder, config)
 
 
 def load_protonet_robustcnn(config):
@@ -250,28 +206,19 @@ def load_protonet_robustcnn(config):
     return ProtoNet(encoder, config)
 
 
-def load_protonet_vit(patch_size, config):
+def load_protonet_vit(config, model_params):
 
     encoder = ViT(
-        in_channels=config["in_channels"],
-        #patch_size=tuple(config["patch_size"]),
-        patch_size=tuple(patch_size),
-        embed_dim=config["embed_dim"],
-        num_layers=config["num_layers"],
-        num_heads=config["num_heads"],
-        mlp_dim=config["mlp_dim"],
-        num_classes=config["num_classes"],
-        in_size=config["in_size"]
+        in_channels=model_params["in_channels"],
+        patch_size=model_params["patch_size"],
+        embed_dim=model_params["embed_dim"],
+        num_layers=model_params["num_layers"],
+        num_heads=model_params["num_heads"],
+        mlp_dim=model_params["mlp_dim"],
+        num_classes=model_params["num_classes"],
+        in_size=model_params["in_size"]
 
     )
-    return ProtoNet(encoder, config)
-
-def load_protonet_lstm(config):
-
-    encoder = LSTM(input_size=2,
-                   hidden_size=128,
-                   num_classes=config["num_classes"])
-
     return ProtoNet(encoder, config)
 
 def load_protonet_daelstm(config):
@@ -280,11 +227,4 @@ def load_protonet_daelstm(config):
                    modulation_num=config["num_classes"])
 
     return ProtoNet(encoder, config)
-
-def load_protonet_resnet():
-    config = get_config('config.yaml')
-
-    encoder = ResNetStack()
-
-    return ProtoNet(encoder)
 

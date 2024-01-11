@@ -1,0 +1,95 @@
+# Proposed Meta-Transformer
+# Main encoder: train with 1024 frame length
+vit_main: {
+  lr_mode: meta, # learning mode
+
+  epoch: 50,
+  batch_size: 128,
+  lr: 0.001,
+  lr_gamma: 0.8,
+
+  in_channels: 1,
+  patch_size: [2, 16],
+  embed_dim: 36,
+  num_layers: 8,
+  num_heads: 9,
+  mlp_dim: 32,
+  in_size: [2,1024],
+  num_classes: 24
+
+}
+
+# Sub encoder: train with 256 frame length
+vit_sub: {
+  lr_mode: meta, # learning mode
+
+  epoch: 50,
+  batch_size: 128,
+  lr: 0.001,
+  lr_gamma: 0.8,
+
+  in_channels: 1,
+  patch_size: [2, 16],
+  embed_dim: 108,
+  num_layers: 8,
+  num_heads: 9,
+  mlp_dim: 16,
+  in_size: [2,128],
+  num_classes: 24
+  
+}
+
+# Meta-Learning 
+protonet: {
+  lr_mode: meta, # learning mode
+
+  epoch: 50,
+  batch_size: 128,
+  lr: 0.001,
+  lr_gamma: 0.8
+
+}
+
+# Meta-Learning
+daelstm_meta: {
+  lr_mode: meta, # learning mode
+
+  epoch: 50,
+  batch_size: 128,
+  lr: 0.001,
+  lr_gamma: 0.8
+
+}
+
+# Supervised Learning
+daelstm_super: {
+  lr_mode: supervised, # learning mode
+
+  epoch: 150,
+  batch_size: 128,
+  lr: 0.01,
+  lr_gamma: 0.8
+
+}
+
+# Supervised Learning
+resnet: {
+  lr_mode: supervised, # learning mode
+
+  epoch: 50,
+  batch_size: 1024,
+  lr: 0.001,
+  lr_gamma: 0.8
+
+}
+
+# Supervised Learning
+robustcnn: {
+  lr_mode: supervised, # learning mode
+
+  epoch: 50,
+  batch_size: 128,
+  lr: 0.01,
+  lr_gamma: 0.8
+
+}

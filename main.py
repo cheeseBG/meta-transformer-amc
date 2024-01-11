@@ -14,37 +14,26 @@ if __name__ == '__main__':
     logger.addHandler(handler)
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('lr_mode', type=str, default='fs', help='Select learning method: sv(supervised), fs(few-shot)')
     parser.add_argument('mode', type=str, default='all', help='train: only train, test: only test, all: train+test')
 
     args = parser.parse_args()
 
-    cfg = get_config('./config.yaml')
-    # For wandb group-name
-    now = str(datetime.now())
+    config = get_config('./config/config.yaml')
+    model_params = get_config('./config/model_params.yaml')[config['model']]
+    lr_mode = model_params['lr_mode']
 
-    # Supervised learning
-    if args.lr_mode == 'sv':
-        if args.mode in ['train', 'all']:
-            logger.info('Start supervised learning')
-            trainer = Trainer('./config.yaml')
-            trainer.train()
-        if args.mode in ['test', 'all']:
-            tester = Tester('./config.yaml', per_snr=True)
-            tester.test()
+    assert args.mode in ['train', 'test', 'all']
 
-    # Few shot learning
-    elif args.lr_mode == 'fs':
+    def run_training(trainer, tester):
         if args.mode in ['train', 'all']:
-            logger.info('Start few-shot learning')
-            trainer = Trainer('./config.yaml')
-            trainer.fs_train(now, cfg['patch_size'])
+            logger.info(f'Start {lr_mode.capitalize()}-Learning')
+            trainer.train() if lr_mode == 'supervised' else trainer.meta_train()
 
         if args.mode in ['test', 'all']:
-            tester = Tester('./config.yaml')
             logger.info('Test')
-            tester.fs_test(now, cfg['patch_size'])
+            tester.test() if lr_mode == 'supervised' else tester.meta_test()
 
-    else:
-        logger.error('Wrong argument!')
+    trainer = Trainer(config, model_params)
+    tester = Tester(config, model_params, per_snr=(lr_mode == 'supervised'))
+    run_training(trainer, tester)
 
